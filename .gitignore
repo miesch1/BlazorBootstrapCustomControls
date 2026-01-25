@@ -1,0 +1,39 @@
+## Build artifacts
+bin/
+obj/
+
+## Visual Studio
+.vs/
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Rider/VS Code
+.idea/
+.vscode/
+
+## Logs
+*.log
+logs/
+
+## Secrets
+appsettings*.Local.json
+appsettings.Development.json
+*.db
+*.sqlite
+
+## Dotnet tooling
+*.db-shm
+*.db-wal
+.nuget/
+
+## Node
+node_modules/
+
+## Coverage
+coverage/
+TestResults/
+
+
