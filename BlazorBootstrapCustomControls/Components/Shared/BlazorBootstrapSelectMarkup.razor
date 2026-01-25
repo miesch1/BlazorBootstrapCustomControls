@@ -1,0 +1,77 @@
+@* Shared markup for BlazorBootstrapSelectSingle and BlazorBootstrapSelectMulti. Reduces duplication. *@
+
+<div class="bs-select mb-3" data-bs-select-id="@Id" data-bs-select="@(IsMulti ? "multi" : "single")">
+  @if (!string.IsNullOrWhiteSpace(Label))
+  {
+    <label class="form-label">@Label</label>
+  }
+
+  <div class="form-control bs-select-input @(Disabled ? "disabled" : "") @(AutoExpandVertically ? "bs-select-auto-expand" : "")"
+       style="@(string.IsNullOrEmpty(Width) ? null : "width:" + Width)"
+       tabindex="@(Disabled ? -1 : 0)"
+       role="combobox"
+       aria-expanded="@Open"
+       aria-haspopup="listbox"
+       aria-disabled="@Disabled"
+       @onclick="async () => await OnInputClick.InvokeAsync()"
+       @onclick:preventDefault="false"
+       @onblur="async () => await OnInputBlur.InvokeAsync()">
+    <span class="bs-select-text @(IsPlaceholder ? "placeholder" : "") @((ShowClearButton && ShouldShowClearButton) ? "has-clear-button" : "")">@DisplayText</span>
+    @* FUTURE: 2 - When clear button has focus and Enter is pressed, should clear selection (currently opens list). *@
+    @if (ShowClearButton && ShouldShowClearButton)
+    {
+      <button type="button" class="bs-select-clear" aria-label="Clear" disabled="@Disabled" tabindex="@(Disabled ? -1 : 0)" @onclick:stopPropagation="true" @onclick="async () => await OnClear.InvokeAsync()">×</button>
+    }
+    <span class="bs-select-arrow"></span>
+  </div>
+
+  @if (Open)
+  {
+    <div class="bs-select-dropdown" role="listbox">
+      @foreach (var (item, i) in Items.Select((x, idx) => (x, idx)))
+      {
+        var ii = i;
+        var val = item.Value;
+        var sel = IsItemSelected(val);
+        <div class="bs-select-item @(ii == HighlightedIndex ? "bs-select-kbd-focus" : "")"
+             role="option"
+             aria-selected="@sel"
+             data-value="@val"
+             @onclick="async () => await SelectItem.InvokeAsync(val)"
+             @onclick:stopPropagation="true"
+             @onmousedown="async () => await OnItemMouseDown.InvokeAsync()"
+             @onmousedown:preventDefault="true"
+             @onmouseenter="async () => await OnItemHover.InvokeAsync(ii)">
+          <span class="bs-select-item-text">@item.Text</span>
+          @if (sel)
+          {
+            <span class="check-mark"></span>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@code {
+  [Parameter] public string Id { get; set; } = "";
+  [Parameter] public string? Label { get; set; }
+  [Parameter] public string? Width { get; set; }
+  [Parameter] public bool AutoExpandVertically { get; set; }
+  [Parameter] public bool Disabled { get; set; }
+  [Parameter] public bool Open { get; set; }
+  [Parameter] public string DisplayText { get; set; } = "";
+  [Parameter] public bool IsPlaceholder { get; set; }
+  [Parameter] public bool ShowClearButton { get; set; }
+  [Parameter] public bool ShouldShowClearButton { get; set; }
+  [Parameter] public bool IsMulti { get; set; }
+  [Parameter] public IReadOnlyList<(string Text, string Value)> Items { get; set; } = Array.Empty<(string, string)>();
+  [Parameter] public int HighlightedIndex { get; set; }
+  [Parameter] public Func<string, bool> IsItemSelected { get; set; } = _ => false;
+  [Parameter] public EventCallback OnInputClick { get; set; }
+  [Parameter] public EventCallback OnInputBlur { get; set; }
+  [Parameter] public EventCallback OnClear { get; set; }
+  [Parameter] public EventCallback<string> SelectItem { get; set; }
+  [Parameter] public EventCallback<int> OnItemHover { get; set; }
+  [Parameter] public EventCallback OnItemMouseDown { get; set; }
+}
