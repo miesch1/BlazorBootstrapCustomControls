@@ -32,6 +32,7 @@ jobs:
           mkdir -p docs
           cp -a build/wwwroot/. docs/
           [ -f docs/.nojekyll ] || touch docs/.nojekyll
+          cp -a docs/index.html docs/404.html
 
       - name: Commit and push docs
         env:

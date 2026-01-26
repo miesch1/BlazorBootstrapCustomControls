@@ -6,7 +6,7 @@ In short, this library provides dropdown controls that look and behave the same 
 
 ![BlazorBootstrapSelectControls](images/BlazorBootstrapSelectControls.png)
 
-**Live Demo:** See it in action [here](https://blazor.codingmatter.com/).
+**Live Demo:** See it in action [here](https://blazor.codingmatter.com/test-blazorbootstrap).
 
 ---
 
