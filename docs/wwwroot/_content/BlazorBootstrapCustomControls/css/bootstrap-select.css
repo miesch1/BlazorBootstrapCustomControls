@@ -1,0 +1,299 @@
+/**
+ * bootstrap-select.css
+ * 
+ * Custom styles for BlazorBootstrapSelectSingle and BlazorBootstrapSelectMulti components
+ * (Bootstrap-based dropdown controls). See README.md §7–§8 for the specification.
+ * 
+ * This stylesheet provides:
+ * - Form-control-like input styling with dropdown arrow
+ * - Dropdown list with Bootstrap-compatible borders, shadows, and spacing
+ * - Right-aligned check-marks for selected items
+ * - Blue highlight for hover and keyboard focus (per §7.2–§7.3)
+ * - Focus ring remains on input while list is open (per §7.4)
+ * 
+ * Sizing and spacing use Bootstrap CSS variables (--bs-*) where available so that
+ * global overrides (e.g. font-size, line-height, border-radius) scale correctly
+ * for accessibility (e.g. visually impaired users) and theming.
+ */
+
+/* ==========================================================================
+   Wrapper and Input Control
+   ========================================================================== */
+
+/* Main wrapper: relative positioning for absolute dropdown */
+.bs-select {
+  position: relative;
+}
+
+/* Input control: styled like Bootstrap form-select with flex layout */
+/* Uses Bootstrap's form-control class to inherit defaults (font-size, line-height, border, border-radius, focus ring, etc.) */
+/* Only override what's necessary for our custom layout and behavior */
+.bs-select-input {
+  position: relative; /* Required for absolute positioning of arrow and clear button */
+  /* Override form-control's display: block to use flex for internal layout */
+  display: flex !important;
+  align-items: center;
+  gap: var(--bs-border-radius-sm, 0.25rem);
+  padding: 0.375rem 2rem 0.375rem 0.75rem; /* Reduced right padding to maximize text space */
+  background-color: var(--bs-body-bg, #fff) !important; /* Use Bootstrap variable for dark mode support */
+  cursor: pointer !important; /* Pointer cursor - override Bootstrap's default */
+  min-height: calc(1em * var(--bs-body-line-height, 1.5) + 0.75rem);
+  height: calc(1em * var(--bs-body-line-height, 1.5) + 0.75rem); /* Scale with line-height for accessibility */
+  user-select: none; /* Prevent text selection */
+  /* Inherit from Bootstrap form-control: width: 100%, font-size: 1rem, font-weight: 400, line-height: 1.5, 
+     color: var(--bs-body-color), border: var(--bs-border-width) solid var(--bs-border-color), 
+     border-radius: var(--bs-border-radius), transition, and focus ring styles */
+}
+
+/* When AutoExpandVertically is true, allow vertical growth for text wrapping */
+/* FUTURE: Consider making the height match exactly when AutoExpandVertically is enabled but text doesn't wrap.
+   Currently there's a slight height difference due to how height: auto calculates vs explicit height. */
+.bs-select-input.bs-select-auto-expand {
+  align-items: center; /* Match normal alignment to maintain same height when not wrapping */
+  height: auto; /* Allow height to grow */
+  min-height: calc(1em * var(--bs-body-line-height, 1.5) + 0.75rem); /* Scale with line-height */
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+/* Hover state: no background change, ensure cursor stays pointer */
+.bs-select-input:hover:not(.disabled) {
+  background-color: var(--bs-body-bg, #fff) !important; /* Use Bootstrap variable for dark mode support */
+  cursor: pointer !important; /* Force pointer cursor on hover */
+}
+
+/* Active/clicked state: no background change */
+.bs-select-input:active:not(.disabled) {
+  background-color: var(--bs-body-bg, #fff) !important; /* Use Bootstrap variable for dark mode support */
+}
+
+/* Focus state: Let Bootstrap's default focus ring propagate (per §7.4: stays on input even when list is open) */
+/* Bootstrap provides: border-color: #86b7fe, outline: 0, box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) */
+.bs-select-input:focus,
+.bs-select-input:focus-within {
+  background-color: var(--bs-body-bg, #fff) !important; /* Use Bootstrap variable for dark mode support */
+}
+
+/* Disabled state */
+.bs-select-input:disabled,
+.bs-select-input.disabled {
+  background-color: var(--bs-secondary-bg);
+  cursor: default !important; /* Override pointer cursor when disabled */
+  opacity: 0.65;
+}
+
+/* Prevent focus ring when disabled */
+.bs-select-input.disabled:focus,
+.bs-select-input.disabled:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: var(--bs-border-color) !important;
+}
+
+/* Disabled state: override pointer cursor on placeholder text */
+.bs-select-input.disabled .bs-select-text.placeholder {
+  cursor: default !important;
+}
+
+/* Text display: flex-1 to fill space; overflow truncated with ellipsis ("...") by default */
+/* Input already has padding-right 2.25rem; arrow (right: 0.75rem) sits in that padding, so no text reserve needed */
+.bs-select-text {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Inherit line-height from parent (.bs-select-input inherits Bootstrap's 1.5) */
+  /* Parent has align-items: center, so this will be vertically centered */
+  background-color: transparent !important; /* Ensure no background on text span */
+  padding-right: 0; /* Arrow in input padding; reserve only when clear button visible */
+}
+
+/* When clear button is visible: reserve space for clear button; avoid over-truncating */
+.bs-select-text.has-clear-button {
+  padding-right: 1.75rem; /* Clear button at right 2rem, but we can reduce padding slightly; rem scales with root font-size */
+}
+
+/* When AutoExpandVertically is true, allow text to wrap and control to grow vertically */
+.bs-select-input.bs-select-auto-expand .bs-select-text {
+  white-space: normal; /* Allow text wrapping */
+  overflow: visible; /* Show wrapped text */
+  text-overflow: clip; /* No ellipsis when wrapping */
+  padding-right: 1.75rem; /* When clear present; 0 when not (see :not(.has-clear-button)). rem scales. */
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* When AutoExpandVertically is true but no clear button: arrow in input padding, no reserve */
+.bs-select-input.bs-select-auto-expand .bs-select-text:not(.has-clear-button) {
+  padding-right: 0;
+}
+
+/* Placeholder text color (when no value selected) */
+.bs-select-text.placeholder {
+  color: var(--bs-secondary-color, rgba(33, 37, 41, 0.75));
+  background-color: transparent !important; /* No background on placeholder text */
+  cursor: pointer !important; /* Ensure pointer cursor even when placeholder is shown */
+  /* Inherit other text properties from parent */
+}
+
+/* ==========================================================================
+   Dropdown Arrow
+   ========================================================================== */
+
+/* Arrow icon (§8.4: match native form-select chevron; em-based so it scales with font-size) */
+.bs-select-arrow {
+  position: absolute;
+  right: 0.5rem; /* Reduced from 0.75rem to maximize text space */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1em;
+  height: 0.75em;
+  background-image: var(--bs-form-select-bg-img, url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e"));
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 1em 0.75em;
+  pointer-events: none;
+}
+
+/* When AutoExpandVertically: keep arrow vertically centered (top: 50% + translateY already handles this) */
+/* No override needed - default centering works for multi-line content */
+
+/* ==========================================================================
+   Clear Button
+   ========================================================================== */
+
+/* Clear button (×): shown when ShowClearButton=true and value is selected */
+/* Text padding accounts for clear button to prevent overlap (see .bs-select-text.has-clear-button) */
+.bs-select-clear {
+  position: absolute;
+  right: 1.75rem; /* Reduced from 2rem to maximize text space while keeping clear button visible */
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 0 0.2rem; /* Reduced padding slightly; rem scales with root font-size */
+  font-size: 1.25em; /* Scale with parent font-size */
+  line-height: 1;
+  color: var(--bs-secondary-color, rgba(33, 37, 41, 0.75));
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.5em; /* Match line-height; em scales with font-size */
+}
+
+.bs-select-clear:hover {
+  color: var(--bs-body-color);
+}
+
+/* When AutoExpandVertically: keep clear button vertically centered (top: 50% + translateY already handles this) */
+/* No override needed - default centering works for multi-line content */
+
+/* Disabled clear button */
+.bs-select-input.disabled .bs-select-clear,
+.bs-select-clear:disabled {
+  cursor: default;
+  opacity: 0.65;
+  pointer-events: none; /* Prevent interaction when disabled */
+}
+
+/* ==========================================================================
+   Dropdown List
+   ========================================================================== */
+
+/* Dropdown container (§8.3: absolute, Bootstrap border/radius/shadow, offset) */
+/* Size to content: largest item + padding + check-mark. No min-width so we don't inherit full column. */
+.bs-select-dropdown {
+  position: absolute;
+  z-index: 1060; /* Above Bootstrap modals */
+  top: 100%;
+  left: 0;
+  width: max-content;
+  min-width: var(--bs-dropdown-min-width, 10rem); /* Bootstrap default; avoid tiny dropdown */
+  margin-top: var(--bs-focus-ring-width, 0.25rem); /* Offset for focus ring; scale with Bootstrap */
+  max-height: 17.5rem; /* ~280px at 16px base; rem scales for accessibility */
+  overflow-y: auto;
+  background: var(--bs-body-bg, #fff);
+  border: var(--bs-border-width) solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  box-shadow: var(--bs-dropdown-box-shadow, var(--bs-box-shadow-lg, 0 1rem 3rem rgba(0, 0, 0, 0.175)));
+}
+
+/* ==========================================================================
+   List Items
+   ========================================================================== */
+
+/* List item (§8.1: match native select option spacing; use Bootstrap dropdown vars where applicable) */
+.bs-select-item {
+  position: relative;
+  padding: var(--bs-dropdown-item-padding-y, 0.25rem) 2.5rem var(--bs-dropdown-item-padding-y, 0.25rem) 0.75rem;
+  cursor: pointer;
+  outline: 0;
+  white-space: nowrap; /* Keep each item on one line so dropdown width = longest item + check space */
+  /* Inherit color, font-size, line-height from Bootstrap defaults */
+}
+
+.bs-select-item-text {
+  display: block;
+}
+
+/* ==========================================================================
+   Check-mark (Selection Indicator)
+   ========================================================================== */
+
+/* Check-mark (§7.1: right-aligned, rotate(45deg) border-based, currentColor) */
+.bs-select-item .check-mark {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-block;
+}
+
+.bs-select-item .check-mark::after {
+  content: "";
+  display: block;
+  width: 0.5em;
+  height: 1em;
+  border-style: solid;
+  border-width: 0 0.26em 0.26em 0;
+  border-color: currentColor; /* Inherits text color */
+  transform: rotate(45deg);
+}
+
+/* ==========================================================================
+   Selection State
+   ========================================================================== */
+
+/* Selected item (§7.1: check-mark only, no background highlight) */
+.bs-select-item[aria-selected="true"] {
+  background: transparent;
+  color: inherit;
+  /* Inherit other properties from Bootstrap defaults */
+}
+
+/* ==========================================================================
+   Hover and Keyboard Focus Highlight
+   ========================================================================== */
+
+/* Hover and keyboard focus (§7.2–§7.3: blue background, white text) */
+.bs-select-item:hover,
+.bs-select-item.bs-select-kbd-focus {
+  background-color: var(--bs-primary, #0d6efd);
+  color: var(--bs-dropdown-link-active-color, #fff); /* Use Bootstrap variable for consistency */
+}
+
+/* Selected + hover/focus: also blue with white text and white check-mark */
+.bs-select-item[aria-selected="true"]:hover,
+.bs-select-item[aria-selected="true"].bs-select-kbd-focus {
+  background-color: var(--bs-primary, #0d6efd);
+  color: var(--bs-dropdown-link-active-color, #fff); /* Use Bootstrap variable for consistency */
+}
+
+/* Check-mark becomes white when item is highlighted */
+.bs-select-item[aria-selected="true"] .check-mark::after,
+.bs-select-item:hover .check-mark::after,
+.bs-select-item.bs-select-kbd-focus .check-mark::after {
+  border-color: var(--bs-dropdown-link-active-color, #fff); /* Use Bootstrap variable for consistency */
+}
