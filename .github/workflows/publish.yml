@@ -25,7 +25,13 @@ jobs:
         run: dotnet restore BlazorBootstrapCustomControlsApp
 
       - name: Publish
-        run: dotnet publish BlazorBootstrapCustomControlsApp -c Release --no-restore -o docs
+        run: dotnet publish BlazorBootstrapCustomControlsApp -c Release --no-restore -o build
+
+      - name: Sync wwwroot to docs
+        run: |
+          mkdir -p docs
+          cp -a build/wwwroot/. docs/
+          [ -f docs/.nojekyll ] || touch docs/.nojekyll
 
       - name: Commit and push docs
         env:
