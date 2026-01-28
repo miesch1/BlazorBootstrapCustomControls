@@ -7,6 +7,33 @@
     background-color: rgba(0,0,0,0.4);
 }
 
+.nav-scrollable {
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-menu {
+    flex: 1 1 auto;
+}
+
+.nav-version {
+    margin-top: auto;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    padding-bottom: 1rem;
+}
+
+.version-label {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.65rem;
+}
+
+.version-value {
+    font-variant-numeric: tabular-nums;
+    word-break: break-all;
+}
+
 .navbar-brand {
     font-size: 1.1rem;
 }

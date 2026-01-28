@@ -4,8 +4,21 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <PackageId>BlazorBootstrapCustomControls</PackageId>
+    <Authors>miesch</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://blazor.codingmatter.com/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/miesch1/BlazorBootstrapCustomControls</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Razor Class Library providing Bootstrap 5-compatible single- and multi-select dropdown components for Blazor.</Description>
+    <PackageTags>blazor;bootstrap;components;dropdown;select</PackageTags>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\LICENSE" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <SupportedPlatform Include="browser" />

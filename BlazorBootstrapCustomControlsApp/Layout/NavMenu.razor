@@ -1,3 +1,5 @@
+@using System.Reflection
+
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">BlazorBootstrapCustomControlsApp</a>
@@ -7,29 +9,33 @@
     </div>
 </div>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
+<div class="@NavMenuCssClass nav-scrollable">
+    <nav class="nav flex-column nav-menu">
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All" @onclick="CollapseNavMenu">
                 <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
+            <NavLink class="nav-link" href="counter" @onclick="CollapseNavMenu">
                 <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
+            <NavLink class="nav-link" href="weather" @onclick="CollapseNavMenu">
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="test-blazorbootstrap">
+            <NavLink class="nav-link" href="test-blazorbootstrap" @onclick="CollapseNavMenu">
                 <span class="bi bi-list-ul-nav-menu" aria-hidden="true"></span> Bootstrap Select
             </NavLink>
         </div>
     </nav>
+    <div class="nav-version px-3" @onclick:stopPropagation="true">
+        <div class="version-label">Version</div>
+        <div class="version-value">@DisplayVersion</div>
+    </div>
 </div>
 
 @code {
@@ -37,8 +43,45 @@
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
+    private string AppVersion =>
+        typeof(BlazorBootstrapCustomControlsApp.App).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+        ?? typeof(BlazorBootstrapCustomControlsApp.App).Assembly
+            .GetName().Version?.ToString()
+        ?? "unknown";
+
+    private string DisplayVersion => ShortenVersion(AppVersion);
+
+    private static string ShortenVersion(string version)
+    {
+        if (string.IsNullOrWhiteSpace(version))
+        {
+            return "unknown";
+        }
+
+        var core = version.Split('-', '+')[0];
+        var parts = core.Split('.');
+        if (parts.Length == 0)
+        {
+            return core;
+        }
+
+        var lastIndex = parts.Length - 1;
+        if (int.TryParse(parts[lastIndex], out _) && parts[lastIndex].Length > 4)
+        {
+            parts[lastIndex] = parts[lastIndex][^4..];
+        }
+
+        return string.Join('.', parts);
+    }
+
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+
+    private void CollapseNavMenu()
+    {
+        collapseNavMenu = true;
     }
 }

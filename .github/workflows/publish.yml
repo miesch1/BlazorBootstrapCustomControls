@@ -1,8 +1,8 @@
 name: Publish to GitHub Pages
 
 on:
-  push:
-    branches: [main]
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -25,7 +25,11 @@ jobs:
         run: dotnet restore BlazorBootstrapCustomControlsApp
 
       - name: Publish
-        run: dotnet publish BlazorBootstrapCustomControlsApp -c Release --no-restore -o build
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          dotnet publish BlazorBootstrapCustomControlsApp -c Release --no-restore -o build \
+            /p:VersionPrefix=$VERSION \
+            /p:ContinuousIntegrationBuild=true
 
       - name: Sync wwwroot to docs
         run: |

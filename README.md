@@ -18,6 +18,16 @@ In short, this library provides dropdown controls that look and behave the same 
 
 ---
 
+## Installation
+
+Install from NuGet:
+
+```bash
+dotnet add package BlazorBootstrapCustomControls
+```
+
+---
+
 ## Usage
 
 1. Add a project reference to `BlazorBootstrapCustomControls`.
