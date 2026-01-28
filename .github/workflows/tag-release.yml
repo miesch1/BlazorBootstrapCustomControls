@@ -7,6 +7,11 @@ on:
 permissions:
   contents: write
 
+# Note:
+# - This workflow creates a tag and a GitHub Release using GITHUB_TOKEN.
+# - Releases created by a workflow do NOT trigger other workflows.
+#   Publish workflows should trigger on the tag push instead (see other YAMLs).
+
 jobs:
   tag_release:
     runs-on: ubuntu-latest

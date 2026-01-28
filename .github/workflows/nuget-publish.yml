@@ -1,8 +1,13 @@
 name: Publish NuGet Package
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*"
+
+# Note:
+# - Triggered by tag pushes because releases created by workflows don't fire release events.
+# - Uses the tag version for package versioning.
 
 permissions:
   contents: read
@@ -26,7 +31,8 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           dotnet pack BlazorBootstrapCustomControls -c Release --no-restore -o artifacts \
-            /p:VersionPrefix=$VERSION \
+            /p:Version=$VERSION \
+            /p:InformationalVersion=$VERSION \
             /p:ContinuousIntegrationBuild=true
 
       - name: Push
