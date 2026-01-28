@@ -86,6 +86,33 @@ main[b-8wwegonppq] {
     background-color: rgba(0,0,0,0.4);
 }
 
+.nav-scrollable[b-nufv4fjn8d] {
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-menu[b-nufv4fjn8d] {
+    flex: 1 1 auto;
+}
+
+.nav-version[b-nufv4fjn8d] {
+    margin-top: auto;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    padding-bottom: 1rem;
+}
+
+.version-label[b-nufv4fjn8d] {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.65rem;
+}
+
+.version-value[b-nufv4fjn8d] {
+    font-variant-numeric: tabular-nums;
+    word-break: break-all;
+}
+
 .navbar-brand[b-nufv4fjn8d] {
     font-size: 1.1rem;
 }
