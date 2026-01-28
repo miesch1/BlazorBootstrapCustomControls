@@ -1,4 +1,6 @@
 @page "/test-blazorbootstrap"
+@using Microsoft.AspNetCore.Components.Web
+@using BlazorBootstrapCustomControls.Components.Shared
 
 <PageTitle>Custom Blazor Bootstrap Select Controls Test</PageTitle>
 
@@ -9,58 +11,45 @@
 <h4 class="mt-4">Single Select (BlazorBootstrapSelectSingle)</h4>
 <p class="text-muted small">Input-like single-select control with @@bind-Value support and keyboard navigation.</p>
 
-<BlazorBootstrapSelectSingle TItem="SportOption"
-                             Label="Single Sport (Custom)"
-                             Data="@Sports"
-                             TextField="s => s.Name"
-                             ValueField="s => s.Id"
-                             PlaceholderText="-- Select Sport --"
-                             @bind-Value="@selectedSportCustom" />
+<BlazorBootstrapSelectSingleString Label="Single Sport (Custom)"
+                                   Data="@Sports"
+                                   PlaceholderText="-- Select Sport --"
+                                   @bind-Value="@selectedSportCustom" />
 
 <p class="mt-2">Selected: @selectedSportCustom</p>
 
-<BlazorBootstrapSelectSingle TItem="SportOption"
-                             Label="Single Sport (No Deselect)"
-                             Data="@Sports"
-                             TextField="s => s.Name"
-                             ValueField="s => s.Id"
-                             PlaceholderText="-- Select Sport --"
-                             AllowDeselect="false"
-                             ShowClearButton="true"
-                             @bind-Value="@selectedSportNoDeselect" />
+<BlazorBootstrapSelectSingleString Label="Single Sport (No Deselect)"
+                                   Data="@Sports"
+                                   PlaceholderText="-- Select Sport --"
+                                   AllowDeselect="false"
+                                   ShowClearButton="true"
+                                   @bind-Value="@selectedSportNoDeselect" />
 
 <p class="mt-2">Selected: @selectedSportNoDeselect</p>
 
-<BlazorBootstrapSelectSingle TItem="SportOption"
-                             Label="Single Sport (Disabled)"
-                             Data="@Sports"
-                             TextField="s => s.Name"
-                             ValueField="s => s.Id"
-                             PlaceholderText="-- Select Sport --"
-                             Disabled="true"
-                             Value="@selectedSportDisabled" />
+<BlazorBootstrapSelectSingleString Label="Single Sport (Disabled)"
+                                   Data="@Sports"
+                                   PlaceholderText="-- Select Sport --"
+                                   Disabled="true"
+                                   Value="@selectedSportDisabled" />
 
 <p class="mt-2">Selected: @selectedSportDisabled</p>
 
-<BlazorBootstrapSelectSingle TItem="SportOption"
-                             Label="Single Sport (Custom Width)"
-                             Data="@Sports"
-                             TextField="s => s.Name"
-                             ValueField="s => s.Id"
-                             PlaceholderText="-- Select Sport --"
-                             Width="400px"
-                             @bind-Value="@selectedSportCustomWidth" />
+<BlazorBootstrapSelectSingleString Label="Single Sport (Custom Width)"
+                                   Data="@Sports"
+                                   PlaceholderText="-- Select Sport --"
+                                   Width="400px"
+                                   @bind-Value="@selectedSportCustomWidth" />
 
 <p class="mt-2">Selected: @selectedSportCustomWidth</p>
-
-<hr />
 
 <h4 class="mt-4">Multi Select (BlazorBootstrapSelectMulti)</h4>
 <p class="text-muted small">Input-like multi-select control with @@bind-Value support, check-marks for selected items, and dropdown stays open for multiple selections.</p>
 
-<BlazorBootstrapSelectMulti TItem="SportOption"
+<!-- Generic TItem/TValue example (custom type + string value). -->
+<BlazorBootstrapSelectMulti TItem="SportOption" TValue="string"
                              Label="Multiple Sports (Custom)"
-                             Data="@Sports"
+                             Data="@SportOptions"
                              TextField="s => s.Name"
                              ValueField="s => s.Id"
                              PlaceholderText="-- Select Sports --"
@@ -68,25 +57,19 @@
 
 <p class="mt-2">Selected: @string.Join(", ", selectedSportsCustom ?? Array.Empty<string>())</p>
 
-<BlazorBootstrapSelectMulti TItem="SportOption"
-                             Label="Multiple Sports (Disabled)"
-                             Data="@Sports"
-                             TextField="s => s.Name"
-                             ValueField="s => s.Id"
-                             PlaceholderText="-- Select Sports --"
-                             Disabled="true"
-                             Value="@selectedSportsDisabled" />
+<BlazorBootstrapSelectMultiString Label="Multiple Sports (Disabled)"
+                                  Data="@Sports"
+                                  PlaceholderText="-- Select Sports --"
+                                  Disabled="true"
+                                  Value="@selectedSportsDisabled" />
 
 <p class="mt-2">Selected: @string.Join(", ", selectedSportsDisabled ?? Array.Empty<string>())</p>
 
-<BlazorBootstrapSelectMulti TItem="SportOption"
-                             Label="Multiple Sports (No Clear Button)"
-                             Data="@Sports"
-                             TextField="s => s.Name"
-                             ValueField="s => s.Id"
-                             PlaceholderText="-- Select Sports --"
-                             ShowClearButton="false"
-                             @bind-Value="@selectedSportsNoClear" />
+<BlazorBootstrapSelectMultiString Label="Multiple Sports (No Clear Button)"
+                                  Data="@Sports"
+                                  PlaceholderText="-- Select Sports --"
+                                  ShowClearButton="false"
+                                  @bind-Value="@selectedSportsNoClear" />
 
 <p class="mt-2">Selected: @string.Join(", ", selectedSportsNoClear ?? Array.Empty<string>())</p>
 
@@ -99,15 +82,12 @@
   </label>
 </div>
 
-<BlazorBootstrapSelectMulti TItem="SportOption"
-                             Label="Multiple Sports (Custom Width + Auto-Expand)"
-                             Data="@Sports"
-                             TextField="s => s.Name"
-                             ValueField="s => s.Id"
-                             PlaceholderText="-- Select Sports --"
-                             Width="400px"
-                             AutoExpandVertically="@autoExpandEnabled"
-                             @bind-Value="@selectedSportsAutoExpand" />
+<BlazorBootstrapSelectMultiString Label="Multiple Sports (Custom Width + Auto-Expand)"
+                                  Data="@Sports"
+                                  PlaceholderText="-- Select Sports --"
+                                  Width="400px"
+                                  AutoExpandVertically="@autoExpandEnabled"
+                                  @bind-Value="@selectedSportsAutoExpand" />
 
 <p class="mt-2">Selected: @string.Join(", ", selectedSportsAutoExpand ?? Array.Empty<string>())</p>
 <p class="text-muted small">AutoExpandVertically="@autoExpandEnabled": input grows vertically when text wraps.</p>
@@ -139,7 +119,18 @@
     public string Name { get; set; } = string.Empty;
   }
 
-  private List<SportOption> Sports = new()
+  private List<string> Sports = new()
+  {
+    "Cross-Country, Track & Field",
+    "Cross-Country",
+    "Swimming",
+    "Track & Field",
+    "Basketball",
+    "Soccer",
+    "Tennis"
+  };
+
+  private List<SportOption> SportOptions = new()
   {
     new() { Id = "1", Name = "Cross-Country, Track & Field" },
     new() { Id = "2", Name = "Cross-Country" },
@@ -153,12 +144,12 @@
   // Single select values
   private string? selectedSportCustom;
   private string? selectedSportNoDeselect;
-  private string? selectedSportDisabled = "3"; // Pre-selected for disabled example
+  private string? selectedSportDisabled = "Swimming"; // Pre-selected for disabled example
   private string? selectedSportCustomWidth;
 
   // Multi select values
   private string[]? selectedSportsCustom = Array.Empty<string>();
-  private string[]? selectedSportsDisabled = new[] { "3", "5" }; // Pre-selected for disabled example
+  private string[]? selectedSportsDisabled = new[] { "Swimming", "Basketball" }; // Pre-selected for disabled example
   private string[]? selectedSportsNoClear = Array.Empty<string>();
   private string[]? selectedSportsCustomWidth = Array.Empty<string>();
   private string[]? selectedSportsAutoExpand = Array.Empty<string>();

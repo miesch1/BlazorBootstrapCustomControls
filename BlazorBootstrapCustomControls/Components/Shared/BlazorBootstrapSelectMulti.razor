@@ -1,8 +1,10 @@
 @* Bootstrap-based multi-select component. See README.md for the specification. *@
+@using System.Collections.Generic
 @typeparam TItem
-@inherits BlazorBootstrapSelectBase<TItem>
+@typeparam TValue
+@inherits BlazorBootstrapSelectBase<TItem, TValue>
 
-<BlazorBootstrapSelectMarkup Id="@_id"
+<BlazorBootstrapSelectMarkup TValue="TValue" Id="@_id"
                        Label="@Label"
                        Width="@Width"
                        AutoExpandVertically="@AutoExpandVertically"
@@ -32,26 +34,29 @@
   /// <summary>
   /// Gets or sets the array of selected values. Use @bind-Value for two-way data binding.
   /// </summary>
-  [Parameter] public string[]? Value { get; set; }
+  [Parameter] public TValue[]? Value { get; set; }
 
   /// <summary>
   /// Gets or sets the callback that is invoked when the selected values change.
   /// </summary>
-  [Parameter] public EventCallback<string[]?> ValueChanged { get; set; }
+  [Parameter] public EventCallback<TValue[]?> ValueChanged { get; set; }
 
   /// <summary>
   /// Gets or sets the expression identifying the value to validate.
   /// Used with EditForm and ValidationMessage components for form validation.
   /// </summary>
-  [Parameter] public Expression<Func<string[]?>>? ValidationMessage { get; set; }
+  [Parameter] public Expression<Func<TValue[]?>>? ValidationMessage { get; set; }
 
   protected override string DisplayText
   {
     get
     {
-      var v = Value ?? Array.Empty<string>();
+      var v = Value ?? Array.Empty<TValue>();
       if (v.Length == 0) return PlaceholderText ?? "";
-      return string.Join(", ", v.Select(val => _items.FirstOrDefault(i => i.Value == val).Text ?? val));
+      return string.Join(", ", v.Select(val =>
+        _items.FirstOrDefault(i => EqualityComparer<TValue>.Default.Equals(i.Value, val)).Text
+        ?? val?.ToString()
+        ?? ""));
     }
   }
 
@@ -59,18 +64,20 @@
 
   protected override bool ShouldShowClearButton => (Value?.Length ?? 0) > 0;
 
-  protected override bool IsItemSelected(string value) => (Value ?? Array.Empty<string>()).Contains(value);
+  protected override bool IsItemSelected(TValue value) =>
+    (Value ?? Array.Empty<TValue>()).Contains(value, EqualityComparer<TValue>.Default);
 
   protected override async Task OnClearValue()
   {
-    await ValueChanged.InvokeAsync(Array.Empty<string>());
+    await ValueChanged.InvokeAsync(Array.Empty<TValue>());
   }
 
-  protected override async Task OnSelectItem(string value)
+  protected override async Task OnSelectItem(TValue value)
   {
-    var arr = (Value ?? Array.Empty<string>()).ToList();
-    if (arr.Contains(value))
-      arr.Remove(value);
+    var arr = (Value ?? Array.Empty<TValue>()).ToList();
+    var idx = arr.FindIndex(v => EqualityComparer<TValue>.Default.Equals(v, value));
+    if (idx >= 0)
+      arr.RemoveAt(idx);
     else
       arr.Add(value);
     await ValueChanged.InvokeAsync(arr.ToArray());
@@ -80,9 +87,10 @@
   protected override async Task OnHandleEnterKey(int highlightedIndex)
   {
     var item = _items[highlightedIndex];
-    var arr = (Value ?? Array.Empty<string>()).ToList();
-    if (arr.Contains(item.Value))
-      arr.Remove(item.Value);
+    var arr = (Value ?? Array.Empty<TValue>()).ToList();
+    var idx = arr.FindIndex(v => EqualityComparer<TValue>.Default.Equals(v, item.Value));
+    if (idx >= 0)
+      arr.RemoveAt(idx);
     else
       arr.Add(item.Value);
     await ValueChanged.InvokeAsync(arr.ToArray());

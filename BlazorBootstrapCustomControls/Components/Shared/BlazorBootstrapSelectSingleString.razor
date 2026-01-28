@@ -1,0 +1,33 @@
+@* Convenience wrapper for string-only data (no selectors needed).
+   Example:
+   <BlazorBootstrapSelectSingleString Data="@colors" @bind-Value="@selectedColor" />
+*@
+
+<BlazorBootstrapSelectSingle TItem="string" TValue="string"
+                             Label="@Label"
+                             Data="@Data"
+                             TextField="s => s"
+                             ValueField="s => s"
+                             PlaceholderText="@PlaceholderText"
+                             Width="@Width"
+                             Disabled="@Disabled"
+                             ShowClearButton="@ShowClearButton"
+                             AutoExpandVertically="@AutoExpandVertically"
+                             AllowDeselect="@AllowDeselect"
+                             Value="@Value"
+                             ValueChanged="@ValueChanged"
+                             ValidationMessage="@ValidationMessage" />
+
+@code {
+  [Parameter] public IEnumerable<string>? Data { get; set; }
+  [Parameter] public string? Label { get; set; }
+  [Parameter] public string? PlaceholderText { get; set; }
+  [Parameter] public string? Width { get; set; }
+  [Parameter] public bool Disabled { get; set; }
+  [Parameter] public bool ShowClearButton { get; set; } = true;
+  [Parameter] public bool AutoExpandVertically { get; set; }
+  [Parameter] public bool AllowDeselect { get; set; } = true;
+  [Parameter] public string? Value { get; set; }
+  [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+  [Parameter] public Expression<Func<string?>>? ValidationMessage { get; set; }
+}

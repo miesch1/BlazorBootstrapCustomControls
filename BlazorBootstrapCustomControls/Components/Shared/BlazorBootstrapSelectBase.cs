@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
+using System;
+using System.Collections.Generic;
 
 namespace BlazorBootstrapCustomControls.Components.Shared;
 
@@ -9,27 +11,48 @@ namespace BlazorBootstrapCustomControls.Components.Shared;
 /// Contains all common functionality to reduce code duplication.
 /// </summary>
 /// <typeparam name="TItem">The type of items in the data source</typeparam>
-public abstract class BlazorBootstrapSelectBase<TItem> : ComponentBase, IDisposable
+/// <typeparam name="TValue">The type of the selected value</typeparam>
+public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, IDisposable
 {
   [Inject] protected IJSRuntime JS { get; set; } = null!;
 
   protected string _id = Guid.NewGuid().ToString("N");
-  protected DotNetObjectReference<BlazorBootstrapSelectBase<TItem>>? _dotNetRef;
+  protected DotNetObjectReference<BlazorBootstrapSelectBase<TItem, TValue>>? _dotNetRef;
   protected bool _open;
   protected bool _justOpened;
   protected int _highlightedIndex;
 
-  protected List<(string Text, string Value)> _items => (Data ?? Enumerable.Empty<TItem>())
-    .Select(x => (TextField?.Invoke(x) ?? x?.ToString() ?? "", ValueField?.Invoke(x) ?? x?.ToString() ?? ""))
+  protected IReadOnlyList<SelectItem<TValue>> _items => (Data ?? Enumerable.Empty<TItem>())
+    .Select(x => new SelectItem<TValue>(TextField?.Invoke(x) ?? x?.ToString() ?? "", GetValue(x)))
     .ToList();
+
+  private TValue GetValue(TItem item)
+  {
+    if (ValueField != null)
+    {
+      return ValueField(item);
+    }
+
+    if (item is TValue v)
+    {
+      return v;
+    }
+
+    if (typeof(TValue) == typeof(string))
+    {
+      return (TValue)(object)(item?.ToString() ?? "");
+    }
+
+    throw new InvalidOperationException("ValueField must be provided when TItem is not TValue.");
+  }
 
   // Abstract members that must be implemented by derived classes
   protected abstract string DisplayText { get; }
   protected abstract bool IsPlaceholder { get; }
   protected abstract bool ShouldShowClearButton { get; }
-  protected abstract bool IsItemSelected(string value);
+  protected abstract bool IsItemSelected(TValue value);
   protected abstract Task OnClearValue();
-  protected abstract Task OnSelectItem(string value);
+  protected abstract Task OnSelectItem(TValue value);
   protected abstract Task OnHandleEnterKey(int highlightedIndex);
 
   /// <summary>
@@ -57,7 +80,7 @@ public abstract class BlazorBootstrapSelectBase<TItem> : ComponentBase, IDisposa
   /// Gets or sets the function used to extract the value from each item.
   /// If not provided, the item's ToString() method will be used.
   /// </summary>
-  [Parameter] public Func<TItem, string>? ValueField { get; set; }
+  [Parameter] public Func<TItem, TValue>? ValueField { get; set; }
 
   /// <summary>
   /// Gets or sets the width of the select control (e.g., "300px", "50%", "100%").
@@ -214,7 +237,7 @@ public abstract class BlazorBootstrapSelectBase<TItem> : ComponentBase, IDisposa
     await JS.InvokeVoidAsync("BSSelect.ensureInputFocus", _id);
   }
 
-  protected async Task SelectItem(string val)
+  protected async Task SelectItem(TValue val)
   {
     // Keep focus on input during click (per §7.4) - prevent focus from moving to clicked item
     await JS.InvokeVoidAsync("BSSelect.ensureInputFocus", _id);

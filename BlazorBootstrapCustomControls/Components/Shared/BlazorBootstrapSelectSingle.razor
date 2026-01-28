@@ -1,8 +1,10 @@
 @* Bootstrap-based single-select component. See README.md for the specification. *@
+@using System.Collections.Generic
 @typeparam TItem
-@inherits BlazorBootstrapSelectBase<TItem>
+@typeparam TValue
+@inherits BlazorBootstrapSelectBase<TItem, TValue>
 
-<BlazorBootstrapSelectMarkup Id="@_id"
+<BlazorBootstrapSelectMarkup TValue="TValue" Id="@_id"
                        Label="@Label"
                        Width="@Width"
                        AutoExpandVertically="@AutoExpandVertically"
@@ -32,12 +34,12 @@
   /// <summary>
   /// Gets or sets the selected value. Use @bind-Value for two-way data binding.
   /// </summary>
-  [Parameter] public string? Value { get; set; }
+  [Parameter] public TValue? Value { get; set; }
 
   /// <summary>
   /// Gets or sets the callback that is invoked when the selected value changes.
   /// </summary>
-  [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+  [Parameter] public EventCallback<TValue?> ValueChanged { get; set; }
 
   /// <summary>
   /// Gets or sets a value indicating whether clicking a selected item will deselect it.
@@ -50,30 +52,33 @@
   /// Gets or sets the expression identifying the value to validate.
   /// Used with EditForm and ValidationMessage components for form validation.
   /// </summary>
-  [Parameter] public Expression<Func<string?>>? ValidationMessage { get; set; }
+  [Parameter] public Expression<Func<TValue?>>? ValidationMessage { get; set; }
 
   protected override string DisplayText => IsPlaceholder
     ? (PlaceholderText ?? "")
-    : (_items.FirstOrDefault(i => i.Value == Value).Text ?? Value ?? "");
+    : (_items.FirstOrDefault(i => EqualityComparer<TValue>.Default.Equals(i.Value, Value)).Text
+       ?? Value?.ToString()
+       ?? "");
 
-  protected override bool IsPlaceholder => string.IsNullOrEmpty(Value);
+  protected override bool IsPlaceholder => Value is null;
 
-  protected override bool ShouldShowClearButton => AllowDeselect && !string.IsNullOrEmpty(Value);
+  protected override bool ShouldShowClearButton => AllowDeselect && Value is not null;
 
-  protected override bool IsItemSelected(string value) => value == Value;
+  protected override bool IsItemSelected(TValue value) =>
+    Value is not null && EqualityComparer<TValue>.Default.Equals(value, Value);
 
   protected override async Task OnClearValue()
   {
-    await ValueChanged.InvokeAsync(null);
+    await ValueChanged.InvokeAsync(default);
   }
 
-  protected override async Task OnSelectItem(string value)
+  protected override async Task OnSelectItem(TValue value)
   {
-    if (value == Value)
+    if (Value is not null && EqualityComparer<TValue>.Default.Equals(value, Value))
     {
       if (AllowDeselect)
       {
-        await ValueChanged.InvokeAsync(null);
+        await ValueChanged.InvokeAsync(default);
         await Close(focusInput: true);
       }
     }
@@ -87,11 +92,11 @@
   protected override async Task OnHandleEnterKey(int highlightedIndex)
   {
     var item = _items[highlightedIndex];
-    if (item.Value == Value)
+    if (Value is not null && EqualityComparer<TValue>.Default.Equals(item.Value, Value))
     {
       if (AllowDeselect)
       {
-        await ValueChanged.InvokeAsync(null);
+        await ValueChanged.InvokeAsync(default);
         await Close(focusInput: true);
       }
     }

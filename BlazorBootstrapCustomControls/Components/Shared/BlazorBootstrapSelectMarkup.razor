@@ -1,4 +1,5 @@
 @* Shared markup for BlazorBootstrapSelectSingle and BlazorBootstrapSelectMulti. Reduces duplication. *@
+@typeparam TValue
 
 <div class="bs-select mb-3" data-bs-select-id="@Id" data-bs-select="@(IsMulti ? "multi" : "single")">
   @if (!string.IsNullOrWhiteSpace(Label))
@@ -36,7 +37,7 @@
         <div class="bs-select-item @(ii == HighlightedIndex ? "bs-select-kbd-focus" : "")"
              role="option"
              aria-selected="@sel"
-             data-value="@val"
+             data-value="@ii"
              @onclick="async () => await SelectItem.InvokeAsync(val)"
              @onclick:stopPropagation="true"
              @onmousedown="async () => await OnItemMouseDown.InvokeAsync()"
@@ -65,13 +66,13 @@
   [Parameter] public bool ShowClearButton { get; set; }
   [Parameter] public bool ShouldShowClearButton { get; set; }
   [Parameter] public bool IsMulti { get; set; }
-  [Parameter] public IReadOnlyList<(string Text, string Value)> Items { get; set; } = Array.Empty<(string, string)>();
+  [Parameter] public IReadOnlyList<SelectItem<TValue>> Items { get; set; } = Array.Empty<SelectItem<TValue>>();
   [Parameter] public int HighlightedIndex { get; set; }
-  [Parameter] public Func<string, bool> IsItemSelected { get; set; } = _ => false;
+  [Parameter] public Func<TValue, bool> IsItemSelected { get; set; } = _ => false;
   [Parameter] public EventCallback OnInputClick { get; set; }
   [Parameter] public EventCallback OnInputBlur { get; set; }
   [Parameter] public EventCallback OnClear { get; set; }
-  [Parameter] public EventCallback<string> SelectItem { get; set; }
+  [Parameter] public EventCallback<TValue> SelectItem { get; set; }
   [Parameter] public EventCallback<int> OnItemHover { get; set; }
   [Parameter] public EventCallback OnItemMouseDown { get; set; }
 }

@@ -44,16 +44,53 @@ dotnet add package BlazorBootstrapCustomControls
 5. Use the components:
 
    ```razor
-   <BlazorBootstrapSelectSingle TItem="MyItem" Data="@items"
+   <BlazorBootstrapSelectSingle TItem="MyItem" TValue="string" Data="@items"
        TextField="x => x.Name" ValueField="x => x.Id"
        PlaceholderText="-- Select --" @bind-Value="@selected" />
 
-   <BlazorBootstrapSelectMulti TItem="MyItem" Data="@items"
+   <BlazorBootstrapSelectMulti TItem="MyItem" TValue="string" Data="@items"
        TextField="x => x.Name" ValueField="x => x.Id"
        PlaceholderText="-- Select --" @bind-Value="@selectedMany" />
+
+   <!-- Convenience wrappers for string-only data -->
+   <BlazorBootstrapSelectSingleString Data="@names" @bind-Value="@selectedName" />
+   <BlazorBootstrapSelectMultiString Data="@names" @bind-Value="@selectedNames" />
    ```
 
 ---
+
+## Generic API Overview
+
+The core components are generic over both the **data item** and the **selected value**:
+
+- `TItem`: the type in your `Data` collection (e.g., `Person`, `SportOption`).
+- `TValue`: the type you want to bind to (e.g., `string`, `int`, `Guid`).
+
+This allows you to keep your domain objects intact and just provide selectors:
+
+- `TextField: Func<TItem, string>` — how to display each item in the UI
+- `ValueField: Func<TItem, TValue>` — the value to bind and compare
+
+Example:
+
+```razor
+<BlazorBootstrapSelectSingle TItem="Person" TValue="int"
+    Data="@people"
+    TextField="p => p.FullName"
+    ValueField="p => p.Id"
+    @bind-Value="@selectedPersonId" />
+```
+
+### Convenience wrappers
+
+If your data is already `IEnumerable<string>`, you can skip selectors entirely:
+
+```razor
+<BlazorBootstrapSelectSingleString Data="@colors" @bind-Value="@selectedColor" />
+<BlazorBootstrapSelectMultiString Data="@colors" @bind-Value="@selectedColors" />
+```
+
+These wrappers simply wire `TextField` and `ValueField` to `s => s` for you.
 
 ## Development (sample app)
 
