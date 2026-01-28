@@ -12,6 +12,8 @@ permissions:
 # - This workflow creates a tag and a GitHub Release using GITHUB_TOKEN.
 # - Releases/tags created by a workflow do NOT trigger other workflows.
 #   To avoid PAT usage, all publish steps are consolidated here.
+# - The app restore uses the locally packed nupkg from artifacts/ (not nuget.org yet),
+#   then the package is pushed to NuGet afterward.
 
 jobs:
   tag_release:
@@ -54,8 +56,25 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
-      - name: Restore (app)
-        run: dotnet restore BlazorBootstrapCustomControlsApp
+      - name: Restore (library)
+        run: dotnet restore BlazorBootstrapCustomControls
+
+      - name: Pack (library)
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          dotnet pack BlazorBootstrapCustomControls -c Release --no-restore -o artifacts \
+            /p:Version=$VERSION \
+            /p:InformationalVersion=$VERSION \
+            /p:ContinuousIntegrationBuild=true
+
+      - name: Restore (app, using local package)
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          ARTIFACTS_DIR="$PWD/artifacts"
+          dotnet restore BlazorBootstrapCustomControlsApp \
+            /p:UseNugetPackage=true \
+            /p:PackageVersion=$VERSION \
+            /p:RestoreSources="$ARTIFACTS_DIR;https://api.nuget.org/v3/index.json"
 
       - name: Publish app to docs
         run: |
@@ -89,17 +108,6 @@ jobs:
             echo "Error: docs directory is empty or does not exist"
             exit 1
           fi
-
-      - name: Restore (library)
-        run: dotnet restore BlazorBootstrapCustomControls
-
-      - name: Pack (library)
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          dotnet pack BlazorBootstrapCustomControls -c Release --no-restore -o artifacts \
-            /p:Version=$VERSION \
-            /p:InformationalVersion=$VERSION \
-            /p:ContinuousIntegrationBuild=true
 
       - name: Push NuGet package
         run: dotnet nuget push "artifacts/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
