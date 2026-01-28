@@ -110,11 +110,13 @@ main[b-8wwegonppq] {
     text-transform: uppercase;
     letter-spacing: 0.06em;
     font-size: 0.65rem;
+    text-align: right;
 }
 
 .version-value[b-nufv4fjn8d] {
     font-variant-numeric: tabular-nums;
     word-break: break-all;
+    text-align: right;
 }
 
 .navbar-brand[b-nufv4fjn8d] {
