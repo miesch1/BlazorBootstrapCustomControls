@@ -20,7 +20,11 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.2" PrivateAssets="all" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(UseNugetPackage)' == 'true'">
+    <PackageReference Include="BlazorBootstrapCustomControls" Version="$(PackageVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseNugetPackage)' != 'true'">
     <ProjectReference Include="..\BlazorBootstrapCustomControls\BlazorBootstrapCustomControls.csproj" />
   </ItemGroup>
 

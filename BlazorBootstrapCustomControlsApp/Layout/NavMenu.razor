@@ -42,7 +42,7 @@
 @code {
     private bool collapseNavMenu = true;
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : "collapse show";
 
     private string AppVersion =>
         typeof(BlazorBootstrapCustomControlsApp.App).Assembly

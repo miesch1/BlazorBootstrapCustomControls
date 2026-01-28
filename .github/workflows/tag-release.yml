@@ -63,6 +63,8 @@ jobs:
           dotnet publish BlazorBootstrapCustomControlsApp -c Release --no-restore -o build \
             /p:Version=$VERSION \
             /p:InformationalVersion=$VERSION \
+            /p:UseNugetPackage=true \
+            /p:PackageVersion=$VERSION \
             /p:ContinuousIntegrationBuild=true
 
       - name: Sync wwwroot to docs

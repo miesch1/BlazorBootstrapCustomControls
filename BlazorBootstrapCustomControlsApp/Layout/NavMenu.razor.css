@@ -8,8 +8,12 @@
 }
 
 .nav-scrollable {
-    display: flex;
+    display: none;
     flex-direction: column;
+}
+
+.nav-scrollable.collapse.show {
+    display: flex;
 }
 
 .nav-menu {
@@ -106,6 +110,10 @@
     .collapse {
         /* Never collapse the sidebar for wide screens */
         display: block;
+    }
+
+    .nav-scrollable {
+        display: flex;
     }
 
     .nav-scrollable {
