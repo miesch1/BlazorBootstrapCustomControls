@@ -87,8 +87,12 @@ main[b-8wwegonppq] {
 }
 
 .nav-scrollable[b-nufv4fjn8d] {
-    display: flex;
+    display: none;
     flex-direction: column;
+}
+
+.nav-scrollable.collapse.show[b-nufv4fjn8d] {
+    display: flex;
 }
 
 .nav-menu[b-nufv4fjn8d] {
@@ -185,6 +189,10 @@ main[b-8wwegonppq] {
     .collapse[b-nufv4fjn8d] {
         /* Never collapse the sidebar for wide screens */
         display: block;
+    }
+
+    .nav-scrollable[b-nufv4fjn8d] {
+        display: flex;
     }
 
     .nav-scrollable[b-nufv4fjn8d] {
