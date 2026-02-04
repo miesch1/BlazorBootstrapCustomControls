@@ -1,7 +1,7 @@
 @* Shared markup for BlazorBootstrapSelectSingle and BlazorBootstrapSelectMulti. Reduces duplication. *@
 @typeparam TValue
 
-<div class="bs-select mb-3" data-bs-select-id="@Id" data-bs-select="@(IsMulti ? "multi" : "single")">
+<div class="bs-select" @attributes="AdditionalAttributes" data-bs-select-id="@Id" data-bs-select="@(IsMulti ? "multi" : "single")">
   @if (!string.IsNullOrWhiteSpace(Label))
   {
     <label class="form-label">@Label</label>
@@ -69,6 +69,7 @@
   [Parameter] public IReadOnlyList<SelectItem<TValue>> Items { get; set; } = Array.Empty<SelectItem<TValue>>();
   [Parameter] public int HighlightedIndex { get; set; }
   [Parameter] public Func<TValue, bool> IsItemSelected { get; set; } = _ => false;
+  [Parameter] public IDictionary<string, object>? AdditionalAttributes { get; set; }
   [Parameter] public EventCallback OnInputClick { get; set; }
   [Parameter] public EventCallback OnInputBlur { get; set; }
   [Parameter] public EventCallback OnClear { get; set; }

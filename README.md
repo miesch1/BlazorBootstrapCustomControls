@@ -57,6 +57,8 @@ dotnet add package BlazorBootstrapCustomControls
    <BlazorBootstrapSelectMultiString Data="@names" @bind-Value="@selectedNames" />
    ```
 
+   Note: The components do not add default outer spacing. Use standard Bootstrap utility classes (e.g. `class="mb-3"`) or app-level CSS to control layout spacing.
+
 ---
 
 ## Generic API Overview

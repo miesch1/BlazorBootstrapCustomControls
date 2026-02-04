@@ -106,6 +106,12 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   /// </summary>
   [Parameter] public bool AutoExpandVertically { get; set; }
 
+  /// <summary>
+  /// Gets or sets additional attributes to apply to the component's outer element.
+  /// </summary>
+  [Parameter(CaptureUnmatchedValues = true)]
+  public IDictionary<string, object>? AdditionalAttributes { get; set; }
+
   protected override void OnInitialized()
   {
     // Create DotNetObjectReference - this works because JSInvokable methods are on the base class
