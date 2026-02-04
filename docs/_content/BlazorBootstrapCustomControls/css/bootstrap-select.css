@@ -37,8 +37,8 @@
   padding: 0.375rem 2rem 0.375rem 0.75rem; /* Reduced right padding to maximize text space */
   background-color: var(--bs-body-bg, #fff) !important; /* Use Bootstrap variable for dark mode support */
   cursor: pointer !important; /* Pointer cursor - override Bootstrap's default */
-  min-height: calc(1em * var(--bs-body-line-height, 1.5) + 0.75rem);
-  height: calc(1em * var(--bs-body-line-height, 1.5) + 0.75rem); /* Scale with line-height for accessibility */
+  min-height: calc(1em * var(--bs-body-line-height, 1.5) + 0.75rem + var(--bs-border-width, 1px) * 2);
+  height: calc(1em * var(--bs-body-line-height, 1.5) + 0.75rem + var(--bs-border-width, 1px) * 2); /* Scale with line-height for accessibility */
   user-select: none; /* Prevent text selection */
   /* Inherit from Bootstrap form-control: width: 100%, font-size: 1rem, font-weight: 400, line-height: 1.5, 
      color: var(--bs-body-color), border: var(--bs-border-width) solid var(--bs-border-color), 
@@ -46,12 +46,10 @@
 }
 
 /* When AutoExpandVertically is true, allow vertical growth for text wrapping */
-/* FUTURE: Consider making the height match exactly when AutoExpandVertically is enabled but text doesn't wrap.
-   Currently there's a slight height difference due to how height: auto calculates vs explicit height. */
 .bs-select-input.bs-select-auto-expand {
   align-items: center; /* Match normal alignment to maintain same height when not wrapping */
   height: auto; /* Allow height to grow */
-  min-height: calc(1em * var(--bs-body-line-height, 1.5) + 0.75rem); /* Scale with line-height */
+  min-height: calc(1em * var(--bs-body-line-height, 1.5) + 0.75rem + var(--bs-border-width, 1px) * 2); /* Scale with line-height */
   padding-top: 0.375rem;
   padding-bottom: 0.375rem;
 }

@@ -24,6 +24,15 @@ a, .btn-link {
     padding-top: 1.1rem;
 }
 
+/* Default spacing for sample app; opt-out with .no-mb */
+.bs-select {
+    margin-bottom: 1rem; /* Bootstrap mb-3 equivalent */
+}
+
+.bs-select.no-mb {
+    margin-bottom: 0;
+}
+
 .valid.modified:not([type=checkbox]) {
     outline: 1px solid #26b050;
 }
