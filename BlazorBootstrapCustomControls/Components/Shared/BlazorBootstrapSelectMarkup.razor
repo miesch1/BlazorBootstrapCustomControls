@@ -18,10 +18,10 @@
        @onclick:preventDefault="false"
        @onblur="async () => await OnInputBlur.InvokeAsync()">
     <span class="bs-select-text @(IsPlaceholder ? "placeholder" : "") @((ShowClearButton && ShouldShowClearButton) ? "has-clear-button" : "")">@DisplayText</span>
-    @* FUTURE: 2 - When clear button has focus and Enter is pressed, should clear selection (currently opens list). *@
+    @* Clear button: not focusable (same as dropdown arrow); use DEL when input has focus to clear. *@
     @if (ShowClearButton && ShouldShowClearButton)
     {
-      <button type="button" class="bs-select-clear" aria-label="Clear" disabled="@Disabled" tabindex="@(Disabled ? -1 : 0)" @onclick:stopPropagation="true" @onclick="async () => await OnClear.InvokeAsync()">×</button>
+      <button type="button" class="bs-select-clear" aria-label="Clear" disabled="@Disabled" tabindex="-1" @onclick:stopPropagation="true" @onclick="async () => await OnClear.InvokeAsync()">×</button>
     }
     <span class="bs-select-arrow"></span>
   </div>

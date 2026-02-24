@@ -147,7 +147,7 @@
   transform: translateY(-50%);
   width: 1em;
   height: 0.75em;
-  background-image: var(--bs-form-select-bg-img, url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e"));
+  background-image: var(--bs-form-select-bg-img, url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='M2 5l6 6 6-6'/%3e%3c/svg%3e"));
   background-repeat: no-repeat;
   background-position: center;
   background-size: 1em 0.75em;
@@ -163,22 +163,33 @@
 
 /* Clear button (×): shown when ShowClearButton=true and value is selected */
 /* Text padding accounts for clear button to prevent overlap (see .bs-select-text.has-clear-button) */
+/* SVG stroke glyph (mask) for crisp, font-like ×; text "×" is visually hidden (aria-label used for a11y) */
 .bs-select-clear {
   position: absolute;
-  right: 1.75rem; /* Reduced from 2rem to maximize text space while keeping clear button visible */
+  right: 1.75rem;
   top: 50%;
   transform: translateY(-50%);
-  background: none;
-  border: none;
-  padding: 0 0.2rem; /* Reduced padding slightly; rem scales with root font-size */
-  font-size: 1.25em; /* Scale with parent font-size */
-  line-height: 1;
+  padding: 0;
+  width: 1.25em;
+  height: 1.25em;
+  font-size: 1em;
+  line-height: 0;
   color: var(--bs-secondary-color, rgba(33, 37, 41, 0.75));
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 1.5em; /* Match line-height; em scales with font-size */
+  display: block;
+  overflow: hidden;
+  text-indent: 200%;
+  white-space: nowrap;
+  border: none;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' d='M4 4 L12 12'/%3E%3Cpath fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' d='M12 4 L4 12'/%3E%3C/svg%3E");
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: 0.9em 0.9em;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' d='M4 4 L12 12'/%3E%3Cpath fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' d='M12 4 L4 12'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: 0.9em 0.9em;
 }
 
 .bs-select-clear:hover {

@@ -236,6 +236,15 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
     StateHasChanged();
   }
 
+  /// <summary>
+  /// Invoked from JS when user presses Delete with input focused and a value selected. Same behavior as clear button click.
+  /// </summary>
+  [JSInvokable]
+  public async Task ClearFromKey()
+  {
+    await OnClear();
+  }
+
   protected async Task OnItemMouseDown()
   {
     // Prevent focus from moving to the list item on mousedown (per §7.4)
