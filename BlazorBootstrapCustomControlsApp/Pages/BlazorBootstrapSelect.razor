@@ -58,6 +58,18 @@
   </div>
 }
 
+<p class="text-muted small mt-2">Invalid + auto-expand (no clear): select a long option and confirm wrapped text does not overlap the arrow/validation icon.</p>
+<BlazorBootstrapSelectSingleString Label="Single Sport (Invalid + Auto-Expand, no clear — visual test)"
+                                   Data="@Sports"
+                                   PlaceholderText="-- Select Sport --"
+                                   Width="210px"
+                                   IsInvalid="true"
+                                   AutoExpandVertically="true"
+                                   ShowClearButton="false"
+                                   @bind-Value="@selectedSportInvalidAutoExpand" />
+
+<p class="mt-2">Selected: @selectedSportInvalidAutoExpand</p>
+
 <h4 class="mt-4">Multi Select (BlazorBootstrapSelectMulti)</h4>
 <p class="text-muted small">Input-like multi-select control with @@bind-Value support, check-marks for selected items, and dropdown stays open for multiple selections.</p>
 
@@ -163,6 +175,7 @@
   private string? selectedSportCustomWidth;
   private string? singleSportValidation;
   private bool singleSportInvalid = true;
+  private string? selectedSportInvalidAutoExpand;
 
   // Multi select values
   private string[]? selectedSportsCustom = Array.Empty<string>();

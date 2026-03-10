@@ -145,6 +145,11 @@
   padding-right: 0;
 }
 
+/* When both invalid and auto-expand (no clear): invalid state wins — reserve space for arrow + validation icon */
+.bs-select-input.is-invalid.bs-select-auto-expand .bs-select-text:not(.has-clear-button) {
+  padding-right: 2.25rem;
+}
+
 /* Placeholder text color (when no value selected) */
 .bs-select-text.placeholder {
   color: var(--bs-secondary-color, rgba(33, 37, 41, 0.75));
