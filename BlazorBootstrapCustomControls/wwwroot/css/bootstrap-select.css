@@ -72,6 +72,24 @@
   background-color: var(--bs-body-bg, #fff) !important; /* Use Bootstrap variable for dark mode support */
 }
 
+/* Invalid state: keep Bootstrap's invalid border, focus ring, and validation icon,
+   but move our clear button and dropdown arrow left so the icon can sit on the far right. */
+.bs-select-input.is-invalid .bs-select-arrow {
+  right: 2.25rem; /* Leave room on the far right for the validation icon */
+}
+
+.bs-select-input.is-invalid .bs-select-clear {
+  right: 3.75rem; /* Clear button to the left of the arrow in invalid state */
+}
+
+.bs-select-input.is-invalid .bs-select-text.has-clear-button {
+  padding-right: 3.75rem; /* Reserve space for clear + arrow + icon */
+}
+
+.bs-select-input.is-invalid .bs-select-text:not(.has-clear-button) {
+  padding-right: 2.25rem; /* Reserve space for arrow + icon */
+}
+
 /* Disabled state */
 .bs-select-input:disabled,
 .bs-select-input.disabled {
@@ -212,7 +230,7 @@
    ========================================================================== */
 
 /* Dropdown container (§8.3: absolute, Bootstrap border/radius/shadow, offset) */
-/* Size to content: largest item + padding + check-mark. No min-width so we don't inherit full column. */
+/* Default: size to content (largest item + padding + check-mark). Use .bs-select-dropdown-match-input to match input width. */
 .bs-select-dropdown {
   position: absolute;
   z-index: 1060; /* Above Bootstrap modals */
@@ -227,6 +245,16 @@
   border: var(--bs-border-width) solid var(--bs-border-color);
   border-radius: var(--bs-border-radius);
   box-shadow: var(--bs-dropdown-box-shadow, var(--bs-box-shadow-lg, 0 1rem 3rem rgba(0, 0, 0, 0.175)));
+}
+
+/* When DropdownMatchInputWidth=true: dropdown width matches input. Wrapper shrink only when Width is set (see markup). */
+.bs-select.bs-select-match-input-width {
+  display: inline-block;
+  width: fit-content;
+}
+.bs-select-dropdown.bs-select-dropdown-match-input {
+  width: 100%;
+  min-width: 0;
 }
 
 /* ==========================================================================
