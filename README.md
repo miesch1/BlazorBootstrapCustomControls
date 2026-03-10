@@ -318,8 +318,11 @@ Implementations must support **data binding** (e.g. `Value`/`ValueChanged` or `@
 | `ValueField`     | `Func<TItem, string>?`    | Value.                               |
 | `Value`          | `string?`                 | Bound value.                         |
 | `ValueChanged`   | `EventCallback<string?>`  | Notify value change.                 |
+| `Class`          | `string?`                 | Additional CSS classes applied to the interactive input surface (e.g. `\"is-invalid\"`). |
 | `Width`          | `string?`                 | Control width.                       |
 | `AutoExpandVertically` | `bool` (default false) | When true, input wraps and grows vertically when text exceeds width; otherwise overflow is truncated with ellipsis (§8.5). |
+| `DropdownMatchInputWidth` | `bool` (default false) | When false, dropdown width auto-sizes to content. When true, dropdown width matches the select input width. |
+| `IsInvalid`      | `bool` (default false)    | When true, renders the input in an invalid state (adds Bootstrap-compatible invalid styling in addition to `Class`). |
 | `Disabled`       | `bool`                    | Disable control.                     |
 | `ValidationMessage` | `Expression<Func<string?>>?` | For validation.                  |
 | `AllowDeselect`  | `bool` (default true)     | When false, prevents de-selecting: re-click and clear do not clear the value.     |
@@ -336,8 +339,11 @@ Implementations must support **data binding** (e.g. `Value`/`ValueChanged` or `@
 | `ValueField`     | `Func<TItem, string>?`    | Value.                               |
 | `Value`          | `string[]?`                | Bound value.                         |
 | `ValueChanged`   | `EventCallback<string[]?>` | Notify value change.                 |
+| `Class`          | `string?`                  | Additional CSS classes applied to the interactive input surface (e.g. `\"is-invalid\"`). |
 | `Width`          | `string?`                  | Control width.                       |
 | `AutoExpandVertically` | `bool` (default false) | When true, input wraps and grows vertically when text exceeds width; otherwise overflow is truncated with ellipsis (§8.5). |
+| `DropdownMatchInputWidth` | `bool` (default false) | When false, dropdown width auto-sizes to content. When true, dropdown width matches the select input width. |
+| `IsInvalid`      | `bool` (default false)     | When true, renders the input in an invalid state (adds Bootstrap-compatible invalid styling in addition to `Class`). |
 | `Disabled`       | `bool`                     | Disable control.                     |
 | `ValidationMessage` | `Expression<Func<string[]?>>?` | For validation.                 |
 | `ShowClearButton` | `bool` (default true)     | When true, shows a clear button (×) when one or more values are selected. |

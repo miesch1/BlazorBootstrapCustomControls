@@ -88,6 +88,12 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   [Parameter] public string? Width { get; set; }
 
   /// <summary>
+  /// Additional CSS classes applied to the interactive input surface (the form-control-like element).
+  /// This is the preferred way to apply Bootstrap classes such as "is-invalid".
+  /// </summary>
+  [Parameter] public string? Class { get; set; }
+
+  /// <summary>
   /// Gets or sets a value indicating whether the control is disabled.
   /// When disabled, the control cannot be interacted with and appears grayed out.
   /// </summary>
@@ -105,6 +111,24 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   /// overflow is truncated with an ellipsis ("...").
   /// </summary>
   [Parameter] public bool AutoExpandVertically { get; set; }
+
+  /// <summary>
+  /// When true, the input is rendered in an invalid state (e.g., red border and focus ring),
+  /// mirroring Bootstrap's "is-invalid" contract. This is additive with any classes passed via Class.
+  /// </summary>
+  [Parameter] public bool IsInvalid { get; set; }
+
+  /// <summary>
+  /// When false (default), the dropdown list width is auto-sized to the longest item.
+  /// When true, the dropdown list width matches the select input width.
+  /// </summary>
+  [Parameter] public bool DropdownMatchInputWidth { get; set; }
+
+  /// <summary>
+  /// Additional attributes applied to the interactive input surface (the form-control-like element).
+  /// Use this to attach data-* attributes or ARIA attributes directly to the control.
+  /// </summary>
+  [Parameter] public IDictionary<string, object>? InputAttributes { get; set; }
 
   /// <summary>
   /// Gets or sets additional attributes to apply to the component's outer element.
