@@ -13,6 +13,7 @@
  * - Tab: closes list and allows natural focus movement
  * - Delete (when list closed): clears selection when clear button is shown
  * - Input blur: closes list (label, other controls, tab, etc.)
+ * - Dropdown panel mousedown: default prevented in markup so scrollbar drag does not blur the input (issue #3)
  */
 
 (function () {
@@ -36,7 +37,7 @@
   window.BSSelect = {
     /**
      * Initialize component (reserved for future use).
-     * List closes on input blur (handled in Blazor); no click-outside JS.
+     * List closes on input blur (handled in Blazor); scrollbar interaction uses mousedown preventDefault on the panel.
      * @param {string} componentId - Unique component instance ID
      * @param {DotNetObjectReference} dotNetRef - Reference to Blazor component
      */

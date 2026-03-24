@@ -30,7 +30,9 @@
 
   @if (Open)
   {
-    <div class="bs-select-dropdown @(DropdownMatchInputWidth ? "bs-select-dropdown-match-input" : "")" role="listbox">
+    @* mousedown preventDefault: keeps focus on combobox input when using scrollbar (issue #3); blur would otherwise close the list. *@
+    <div class="bs-select-dropdown @(DropdownMatchInputWidth ? "bs-select-dropdown-match-input" : "")" role="listbox"
+         @onmousedown:preventDefault="true">
       @foreach (var (item, i) in Items.Select((x, idx) => (x, idx)))
       {
         var ii = i;
