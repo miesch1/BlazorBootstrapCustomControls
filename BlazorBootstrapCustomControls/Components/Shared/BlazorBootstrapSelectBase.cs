@@ -12,12 +12,13 @@ namespace BlazorBootstrapCustomControls.Components.Shared;
 /// </summary>
 /// <typeparam name="TItem">The type of items in the data source</typeparam>
 /// <typeparam name="TValue">The type of the selected value</typeparam>
-public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, IDisposable
+public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, IAsyncDisposable
 {
   [Inject] protected IJSRuntime JS { get; set; } = null!;
 
   protected string _id = Guid.NewGuid().ToString("N");
   protected DotNetObjectReference<BlazorBootstrapSelectBase<TItem, TValue>>? _dotNetRef;
+  private bool _disposed;
   protected bool _open;
   protected bool _justOpened;
   protected int _highlightedIndex;
@@ -25,9 +26,8 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   private DateTime _lastTypeAheadInputUtc = DateTime.MinValue;
   private const int TypeAheadResetMilliseconds = 700;
 
-  protected IReadOnlyList<SelectItem<TValue>> _items => (Data ?? Enumerable.Empty<TItem>())
-    .Select(x => new SelectItem<TValue>(TextField?.Invoke(x) ?? x?.ToString() ?? "", GetValue(x)))
-    .ToList();
+  /// <summary>Snapshot of <see cref="Data"/> built in <see cref="OnParametersSet"/> (avoids reallocating on every access).</summary>
+  protected IReadOnlyList<SelectItem<TValue>> _items = Array.Empty<SelectItem<TValue>>();
 
   private TValue GetValue(TItem item)
   {
@@ -145,6 +145,13 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
     _dotNetRef = DotNetObjectReference.Create(this);
   }
 
+  protected override void OnParametersSet()
+  {
+    _items = (Data ?? Enumerable.Empty<TItem>())
+      .Select(x => new SelectItem<TValue>(TextField?.Invoke(x) ?? x?.ToString() ?? "", GetValue(x)))
+      .ToList();
+  }
+
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
     if (firstRender)
@@ -162,18 +169,31 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
       {
         await JS.InvokeVoidAsync("BSSelect.focusItem", _id, _highlightedIndex);
       }
-      await JS.InvokeVoidAsync("BSSelect.registerListKeys", _id, _dotNetRef);
     }
   }
 
-  public void Dispose()
+  /// <summary>
+  /// Blazor awaits this when the component is removed, so JS teardown and <see cref="DotNetObjectReference{TValue}"/>
+  /// disposal complete before the instance is released (no fire-and-forget from sync <c>IDisposable</c>).
+  /// </summary>
+  public async ValueTask DisposeAsync()
   {
-    _ = JS.InvokeVoidAsync("BSSelect.teardown", _id);
-    _dotNetRef?.Dispose();
-  }
+    if (_disposed) return;
+    _disposed = true;
 
-  [JSInvokable]
-  public void CloseFromOutside() => _ = Close(focusInput: false);
+    try
+    {
+      await JS.InvokeVoidAsync("BSSelect.teardown", _id);
+    }
+    catch (JSDisconnectedException)
+    {
+    }
+    finally
+    {
+      _dotNetRef?.Dispose();
+      _dotNetRef = null;
+    }
+  }
 
   [JSInvokable]
   public void OpenFromKey(bool highlightFirst = false)
@@ -308,7 +328,6 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
     _open = false;
     _typeAheadBuffer = string.Empty;
     _lastTypeAheadInputUtc = DateTime.MinValue;
-    await JS.InvokeVoidAsync("BSSelect.unregisterListKeys", _id);
     if (focusInput) await JS.InvokeVoidAsync("BSSelect.focusInput", _id);
     StateHasChanged();
   }
@@ -316,12 +335,15 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   protected void OnInputClick()
   {
     if (Disabled) return;
-    _open = !_open;
     if (_open)
     {
-      _justOpened = true;
-      _highlightedIndex = -1; /* Don't highlight first item on click */
+      _ = Close(focusInput: false);
+      return;
     }
+
+    _open = true;
+    _justOpened = true;
+    _highlightedIndex = -1; /* Don't highlight first item on click */
     _typeAheadBuffer = string.Empty;
     _lastTypeAheadInputUtc = DateTime.MinValue;
     StateHasChanged();

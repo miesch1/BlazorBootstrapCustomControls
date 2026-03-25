@@ -5,15 +5,17 @@
 <div class="bs-select @(DropdownMatchInputWidth && !string.IsNullOrEmpty(Width) ? "bs-select-match-input-width" : "")" @attributes="AdditionalAttributes" data-bs-select-id="@Id" data-bs-select="@(IsMulti ? "multi" : "single")">
   @if (!string.IsNullOrWhiteSpace(Label))
   {
-    <label class="form-label">@Label</label>
+    <label class="form-label" for="@Id">@Label</label>
   }
 
   <div class="@InputCssClass"
+       id="@Id"
        style="@(string.IsNullOrEmpty(Width) ? null : "width:" + Width)"
        tabindex="@(Disabled ? -1 : 0)"
        role="combobox"
        aria-expanded="@Open"
        aria-haspopup="listbox"
+       aria-controls="@(Open ? ListboxDomId : null)"
        aria-disabled="@Disabled"
        @attributes="InputAttributes"
        @onclick="async () => await OnInputClick.InvokeAsync()"
@@ -31,7 +33,7 @@
   @if (Open)
   {
     @* mousedown preventDefault: keeps focus on combobox input when using scrollbar (issue #3); blur would otherwise close the list. *@
-    <div class="bs-select-dropdown @(DropdownMatchInputWidth ? "bs-select-dropdown-match-input" : "")" role="listbox"
+    <div class="bs-select-dropdown @(DropdownMatchInputWidth ? "bs-select-dropdown-match-input" : "")" id="@ListboxDomId" role="listbox"
          @onmousedown:preventDefault="true">
       @foreach (var (item, i) in Items.Select((x, idx) => (x, idx)))
       {
@@ -84,6 +86,9 @@
   [Parameter] public EventCallback<TValue> SelectItem { get; set; }
   [Parameter] public EventCallback<int> OnItemHover { get; set; }
   [Parameter] public EventCallback OnItemMouseDown { get; set; }
+
+  /// <summary>DOM id for the listbox panel; pairs with <c>aria-controls</c> on the combobox.</summary>
+  private string? ListboxDomId => string.IsNullOrEmpty(Id) ? null : Id + "-listbox";
 
   private string InputCssClass =>
     "form-control bs-select-input"
