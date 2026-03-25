@@ -12,6 +12,7 @@
  * - Escape: closes list
  * - Tab: closes list and allows natural focus movement
  * - Delete (when list closed): clears selection when clear button is shown
+ * - Printable keys: type-ahead highlight by item prefix (opens list when closed)
  * - Input blur: closes list (label, other controls, tab, etc.)
  * - Dropdown panel mousedown: default prevented in markup so scrollbar drag does not blur the input (issue #3)
  */
@@ -149,6 +150,14 @@
           dotNetRef.invokeMethodAsync('ClearFromKey');
           return;
         }
+
+        // When list is closed, printable keys open the list and run type-ahead (prefix highlight).
+        if (!isOpen && !e.ctrlKey && !e.altKey && !e.metaKey && k.length === 1) {
+          e.preventDefault();
+          e.stopPropagation();
+          dotNetRef.invokeMethodAsync('OpenAndTypeAhead', k);
+          return;
+        }
         
         // When list is open, handle arrow keys, Enter, Escape, and Tab on input (keeps focus on input)
         if (isOpen && ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter', 'Escape', 'Tab'].indexOf(k) !== -1) {
@@ -158,6 +167,15 @@
             e.stopPropagation();
           }
           dotNetRef.invokeMethodAsync('HandleListKey', k);
+          return;
+        }
+
+        // When list is open, printable keys run type-ahead to highlight first prefix match.
+        // Keep default prevented so browser/page-level key handling does not interfere.
+        if (isOpen && !e.ctrlKey && !e.altKey && !e.metaKey && (k.length === 1)) {
+          e.preventDefault();
+          e.stopPropagation();
+          dotNetRef.invokeMethodAsync('HandleTypeAhead', k);
           return;
         }
         

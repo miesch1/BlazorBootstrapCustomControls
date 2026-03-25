@@ -170,6 +170,14 @@ Implementations must work within a **Bootstrap 5** (or compatible) stylesheet:
 - When **Enter** opens the list, no item is highlighted initially.
 - **Down**, **Right**, and **Enter** must **not** change the selected value(s) (e.g. must not cycle through options in the input).
 
+#### 4.1a Type-ahead — printable keys (opens list when closed)
+
+- **Both controls:** with focus in the **input**, **printable keys** (single character keys, excluding Ctrl/Alt/Meta modifiers) move the **keyboard highlight** to the **first list item** whose display text **starts with** the current type-ahead string (**case-insensitive** prefix match).
+- **List closed:** the first such key **opens** the list and applies the same matching rules (highlight only; **no selection** until **Enter** or **mouse click**, §4.4 / §5).
+- **List open:** each printable key **appends** to a short buffer; the highlight updates to the first prefix match. If the longer string matches nothing, the implementation retries using **only the latest character** (so a mistyped letter can still jump to a valid prefix).
+- **Buffer reset:** the type-ahead string is cleared when it goes **idle** for about **700 ms** between keys, when the list **closes**, or when the list is opened by **clicking** the input (so mouse-open starts with a fresh buffer).
+- **Selection:** typing alone does **not** change the bound value; the user still **Enter**s or **clicks** to confirm (§4.4, §5).
+
 #### 4.2 Close list — ArrowUp / ArrowLeft
 
 - **Both controls:** when the list is **open** and the highlight is on the **first** item, **ArrowUp** and **ArrowLeft** **close** the list.
@@ -354,6 +362,7 @@ Implementations must support **data binding** (e.g. `Value`/`ValueChanged` or `@
 
 - **Prefer C# in Razor over JS:** Favor C# in Razor over JavaScript when implementing behavior; use JS only when necessary (e.g. keydown before Blazor can handle it, or focus in a portal). See §1.
 - **Down / Right / Enter to open list (§4.1), both controls:** When the input has focus and the list is closed, **Down**, **Right**, or **Enter** open the list (they do not close it) and must not change the selected value(s). When **Down** or **Right** opens the list, the **first** item is highlighted. When **Enter** opens the list, no item is highlighted initially. Use a stable marker (e.g. `data-select-single`, `data-select-multi`, or a wrapper class) so keydown (or equivalent) handling applies to the intended control(s).
+- **Type-ahead (§4.1a), both controls:** When the list is **closed**, printable keys are forwarded to `OpenAndTypeAhead`; when **open**, to `HandleTypeAhead` (see `wwwroot/js/bootstrap-select.js`). Prefix matching uses each item’s display text (`TextField` / `ToString()`). Closing the list clears the buffer; scrollbar interaction remains as in issue #3 (dropdown `mousedown` default prevented in markup).
 - **Up to close list (§4.2), both controls:** When the list is open and the highlight is on the first item, **ArrowUp** and **ArrowLeft** close the list.
 - **Click input to toggle list (§5.1), both controls:** Click on the input toggles the list (open if closed, close if open).
 - Arrow keys do **not** wrap: **ArrowDown**/**ArrowRight** on the last item do nothing; **ArrowUp**/**ArrowLeft** on the first item close the list (§4.2).
@@ -374,7 +383,7 @@ The following behaviors are **optional**. Implementations may omit them or defer
 - **Select-all** (SelectMulti): Optional header or action to select all items in the list (default off). A `ShowSelectAll` (or equivalent) parameter may control visibility.
 - **Dropdown icon** (SelectMulti, or both): Optional icon (e.g. arrow on the right) so the control matches the single-select. When implemented, same styling as §8.4. **Note:** This is currently implemented for both Single and Multi.
 - **Floating label** (SelectSingle, SelectMulti): Optional floating-label style for the control. A `FloatingLabel` (or equivalent) parameter may control it.
-- **Search / filter** (both): Optional text filter in or above the list to narrow items. Not in the current required spec.
+- **Search / filter** (both): Optional text filter in or above the list to narrow items. Not in the current required spec. (Distinct from **type-ahead** prefix highlight in §4.1a, which does not remove items from the list.)
 - **Grouping** (both): Optional group headers in the list to organize items. Not in the current required spec.
 
 ---

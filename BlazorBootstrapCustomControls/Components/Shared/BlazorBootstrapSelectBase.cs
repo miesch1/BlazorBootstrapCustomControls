@@ -21,6 +21,9 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   protected bool _open;
   protected bool _justOpened;
   protected int _highlightedIndex;
+  private string _typeAheadBuffer = string.Empty;
+  private DateTime _lastTypeAheadInputUtc = DateTime.MinValue;
+  private const int TypeAheadResetMilliseconds = 700;
 
   protected IReadOnlyList<SelectItem<TValue>> _items => (Data ?? Enumerable.Empty<TItem>())
     .Select(x => new SelectItem<TValue>(TextField?.Invoke(x) ?? x?.ToString() ?? "", GetValue(x)))
@@ -178,6 +181,8 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
     if (_open || Disabled) return;
     _open = true;
     _justOpened = true;
+    _typeAheadBuffer = string.Empty;
+    _lastTypeAheadInputUtc = DateTime.MinValue;
     // When Down arrow opens the list, highlight first item; otherwise don't highlight (Enter key or mouse click)
     _highlightedIndex = highlightFirst ? 0 : -1;
     StateHasChanged();
@@ -220,10 +225,89 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
     }
   }
 
+  /// <summary>
+  /// Handles type-ahead while the list is open. Typing printable characters highlights
+  /// the first matching item by text (prefix match, case-insensitive).
+  /// </summary>
+  [JSInvokable]
+  public Task HandleTypeAhead(string key) =>
+    !_open || string.IsNullOrEmpty(key) ? Task.CompletedTask : ApplyTypeAheadKeyAsync(key);
+
+  /// <summary>
+  /// When the list is closed, typing a printable character opens the list and highlights
+  /// the first item whose text starts with that prefix (same buffer/timeout rules as when open).
+  /// </summary>
+  [JSInvokable]
+  public async Task OpenAndTypeAhead(string key)
+  {
+    if (Disabled || string.IsNullOrEmpty(key)) return;
+    if (_items.Count == 0) return;
+
+    if (!_open)
+    {
+      _open = true;
+      _justOpened = true;
+      _typeAheadBuffer = string.Empty;
+      _lastTypeAheadInputUtc = DateTime.MinValue;
+      _highlightedIndex = -1;
+    }
+
+    await ApplyTypeAheadKeyAsync(key);
+  }
+
+  private async Task ApplyTypeAheadKeyAsync(string key)
+  {
+    if (string.IsNullOrEmpty(key)) return;
+    if (_items.Count == 0) return;
+
+    var now = DateTime.UtcNow;
+    if ((now - _lastTypeAheadInputUtc).TotalMilliseconds > TypeAheadResetMilliseconds)
+    {
+      _typeAheadBuffer = string.Empty;
+    }
+    _lastTypeAheadInputUtc = now;
+
+    _typeAheadBuffer += key;
+
+    var index = FindPrefixMatchIndex(_typeAheadBuffer);
+
+    // If a longer buffer has no match, retry with only the latest character.
+    if (index < 0 && _typeAheadBuffer.Length > 1)
+    {
+      _typeAheadBuffer = key;
+      index = FindPrefixMatchIndex(_typeAheadBuffer);
+    }
+
+    if (index >= 0)
+    {
+      _highlightedIndex = index;
+      await JS.InvokeVoidAsync("BSSelect.focusItem", _id, _highlightedIndex);
+    }
+
+    StateHasChanged();
+  }
+
+  private int FindPrefixMatchIndex(string prefix)
+  {
+    if (string.IsNullOrWhiteSpace(prefix)) return -1;
+
+    for (var i = 0; i < _items.Count; i++)
+    {
+      if (_items[i].Text.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+      {
+        return i;
+      }
+    }
+
+    return -1;
+  }
+
   protected async Task Close(bool focusInput)
   {
     if (!_open) return;
     _open = false;
+    _typeAheadBuffer = string.Empty;
+    _lastTypeAheadInputUtc = DateTime.MinValue;
     await JS.InvokeVoidAsync("BSSelect.unregisterListKeys", _id);
     if (focusInput) await JS.InvokeVoidAsync("BSSelect.focusInput", _id);
     StateHasChanged();
@@ -233,7 +317,13 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   {
     if (Disabled) return;
     _open = !_open;
-    if (_open) { _justOpened = true; _highlightedIndex = -1; } /* Don't highlight first item on click */
+    if (_open)
+    {
+      _justOpened = true;
+      _highlightedIndex = -1; /* Don't highlight first item on click */
+      _typeAheadBuffer = string.Empty;
+      _lastTypeAheadInputUtc = DateTime.MinValue;
+    }
     StateHasChanged();
   }
 
