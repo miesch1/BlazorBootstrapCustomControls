@@ -143,10 +143,6 @@
           isOpen = ariaExpanded && ariaExpanded.toLowerCase() === 'true';
         }
         
-        // When clear button has focus and Enter is pressed, let the button activate (clear) instead of opening the list.
-        var isClearButton = e.target.closest && e.target.closest('.bs-select-clear');
-        if (isClearButton && k === 'Enter') return;
-
         // When list is closed, Delete clears selection if the clear button is visible (same as clicking it).
         if (!isOpen && k === 'Delete' && r.querySelector('.bs-select-clear')) {
           e.preventDefault();

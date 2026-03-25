@@ -37,8 +37,8 @@
   padding: 0.375rem 2rem 0.375rem 0.75rem; /* Reduced right padding to maximize text space */
   background-color: var(--bs-body-bg, #fff) !important; /* Use Bootstrap variable for dark mode support */
   cursor: pointer !important; /* Pointer cursor - override Bootstrap's default */
-  min-height: calc(1em * var(--bs-body-line-height, 1.5) + 0.75rem);
-  height: calc(1em * var(--bs-body-line-height, 1.5) + 0.75rem); /* Scale with line-height for accessibility */
+  min-height: calc(1em * var(--bs-body-line-height, 1.5) + 0.75rem + var(--bs-border-width, 1px) * 2);
+  height: calc(1em * var(--bs-body-line-height, 1.5) + 0.75rem + var(--bs-border-width, 1px) * 2); /* Scale with line-height for accessibility */
   user-select: none; /* Prevent text selection */
   /* Inherit from Bootstrap form-control: width: 100%, font-size: 1rem, font-weight: 400, line-height: 1.5, 
      color: var(--bs-body-color), border: var(--bs-border-width) solid var(--bs-border-color), 
@@ -46,12 +46,10 @@
 }
 
 /* When AutoExpandVertically is true, allow vertical growth for text wrapping */
-/* FUTURE: Consider making the height match exactly when AutoExpandVertically is enabled but text doesn't wrap.
-   Currently there's a slight height difference due to how height: auto calculates vs explicit height. */
 .bs-select-input.bs-select-auto-expand {
   align-items: center; /* Match normal alignment to maintain same height when not wrapping */
   height: auto; /* Allow height to grow */
-  min-height: calc(1em * var(--bs-body-line-height, 1.5) + 0.75rem); /* Scale with line-height */
+  min-height: calc(1em * var(--bs-body-line-height, 1.5) + 0.75rem + var(--bs-border-width, 1px) * 2); /* Scale with line-height */
   padding-top: 0.375rem;
   padding-bottom: 0.375rem;
 }
@@ -72,6 +70,24 @@
 .bs-select-input:focus,
 .bs-select-input:focus-within {
   background-color: var(--bs-body-bg, #fff) !important; /* Use Bootstrap variable for dark mode support */
+}
+
+/* Invalid state: keep Bootstrap's invalid border, focus ring, and validation icon,
+   but move our clear button and dropdown arrow left so the icon can sit on the far right. */
+.bs-select-input.is-invalid .bs-select-arrow {
+  right: 2.25rem; /* Leave room on the far right for the validation icon */
+}
+
+.bs-select-input.is-invalid .bs-select-clear {
+  right: 3.75rem; /* Clear button to the left of the arrow in invalid state */
+}
+
+.bs-select-input.is-invalid .bs-select-text.has-clear-button {
+  padding-right: 3.75rem; /* Reserve space for clear + arrow + icon */
+}
+
+.bs-select-input.is-invalid .bs-select-text:not(.has-clear-button) {
+  padding-right: 2.25rem; /* Reserve space for arrow + icon */
 }
 
 /* Disabled state */
@@ -129,6 +145,11 @@
   padding-right: 0;
 }
 
+/* When both invalid and auto-expand (no clear): invalid state wins — reserve space for arrow + validation icon */
+.bs-select-input.is-invalid.bs-select-auto-expand .bs-select-text:not(.has-clear-button) {
+  padding-right: 2.25rem;
+}
+
 /* Placeholder text color (when no value selected) */
 .bs-select-text.placeholder {
   color: var(--bs-secondary-color, rgba(33, 37, 41, 0.75));
@@ -149,7 +170,7 @@
   transform: translateY(-50%);
   width: 1em;
   height: 0.75em;
-  background-image: var(--bs-form-select-bg-img, url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e"));
+  background-image: var(--bs-form-select-bg-img, url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75' d='M2 5l6 6 6-6'/%3e%3c/svg%3e"));
   background-repeat: no-repeat;
   background-position: center;
   background-size: 1em 0.75em;
@@ -165,22 +186,33 @@
 
 /* Clear button (×): shown when ShowClearButton=true and value is selected */
 /* Text padding accounts for clear button to prevent overlap (see .bs-select-text.has-clear-button) */
+/* SVG stroke glyph (mask) for crisp, font-like ×; text "×" is visually hidden (aria-label used for a11y) */
 .bs-select-clear {
   position: absolute;
-  right: 1.75rem; /* Reduced from 2rem to maximize text space while keeping clear button visible */
+  right: 1.75rem;
   top: 50%;
   transform: translateY(-50%);
-  background: none;
-  border: none;
-  padding: 0 0.2rem; /* Reduced padding slightly; rem scales with root font-size */
-  font-size: 1.25em; /* Scale with parent font-size */
-  line-height: 1;
+  padding: 0;
+  width: 1.25em;
+  height: 1.25em;
+  font-size: 1em;
+  line-height: 0;
   color: var(--bs-secondary-color, rgba(33, 37, 41, 0.75));
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 1.5em; /* Match line-height; em scales with font-size */
+  display: block;
+  overflow: hidden;
+  text-indent: 200%;
+  white-space: nowrap;
+  border: none;
+  background-color: currentColor;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' d='M4 4 L12 12'/%3E%3Cpath fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' d='M12 4 L4 12'/%3E%3C/svg%3E");
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: 0.9em 0.9em;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' d='M4 4 L12 12'/%3E%3Cpath fill='none' stroke='white' stroke-width='1.75' stroke-linecap='round' d='M12 4 L4 12'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: 0.9em 0.9em;
 }
 
 .bs-select-clear:hover {
@@ -203,7 +235,7 @@
    ========================================================================== */
 
 /* Dropdown container (§8.3: absolute, Bootstrap border/radius/shadow, offset) */
-/* Size to content: largest item + padding + check-mark. No min-width so we don't inherit full column. */
+/* Default: size to content (largest item + padding + check-mark). Use .bs-select-dropdown-match-input to match input width. */
 .bs-select-dropdown {
   position: absolute;
   z-index: 1060; /* Above Bootstrap modals */
@@ -218,6 +250,16 @@
   border: var(--bs-border-width) solid var(--bs-border-color);
   border-radius: var(--bs-border-radius);
   box-shadow: var(--bs-dropdown-box-shadow, var(--bs-box-shadow-lg, 0 1rem 3rem rgba(0, 0, 0, 0.175)));
+}
+
+/* When DropdownMatchInputWidth=true: dropdown width matches input. Wrapper shrink only when Width is set (see markup). */
+.bs-select.bs-select-match-input-width {
+  display: inline-block;
+  width: fit-content;
+}
+.bs-select-dropdown.bs-select-dropdown-match-input {
+  width: 100%;
+  min-width: 0;
 }
 
 /* ==========================================================================

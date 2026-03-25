@@ -321,9 +321,9 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
     {
       _justOpened = true;
       _highlightedIndex = -1; /* Don't highlight first item on click */
-      _typeAheadBuffer = string.Empty;
-      _lastTypeAheadInputUtc = DateTime.MinValue;
     }
+    _typeAheadBuffer = string.Empty;
+    _lastTypeAheadInputUtc = DateTime.MinValue;
     StateHasChanged();
   }
 
