@@ -28,4 +28,22 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.0" />
   </ItemGroup>
 
+  <!--
+    Single source of truth: wwwroot/js|css. Checked-in docs mirrors (for static preview / consistency)
+    are overwritten on every library build so they cannot drift from wwwroot.
+  -->
+  <Target Name="SyncStaticWebAssetsToDocsMirrors"
+          AfterTargets="Build"
+          Condition="Exists('$(MSBuildThisFileDirectory)..\docs')">
+    <PropertyGroup>
+      <_RepoRoot>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\'))</_RepoRoot>
+      <_JsSrc>$(MSBuildThisFileDirectory)wwwroot\js\bootstrap-select.js</_JsSrc>
+      <_CssSrc>$(MSBuildThisFileDirectory)wwwroot\css\bootstrap-select.css</_CssSrc>
+    </PropertyGroup>
+    <Copy SourceFiles="$(_JsSrc)" DestinationFolder="$(_RepoRoot)docs\_content\BlazorBootstrapCustomControls\js" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(_JsSrc)" DestinationFolder="$(_RepoRoot)docs\wwwroot\_content\BlazorBootstrapCustomControls\js" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(_CssSrc)" DestinationFolder="$(_RepoRoot)docs\_content\BlazorBootstrapCustomControls\css" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(_CssSrc)" DestinationFolder="$(_RepoRoot)docs\wwwroot\_content\BlazorBootstrapCustomControls\css" SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>

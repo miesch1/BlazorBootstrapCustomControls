@@ -170,6 +170,14 @@ Implementations must work within a **Bootstrap 5** (or compatible) stylesheet:
 - When **Enter** opens the list, no item is highlighted initially.
 - **Down**, **Right**, and **Enter** must **not** change the selected value(s) (e.g. must not cycle through options in the input).
 
+#### 4.1a Type-ahead — printable keys (opens list when closed)
+
+- **Both controls:** with focus in the **input**, **printable keys** (single character keys, excluding Ctrl/Alt/Meta modifiers) move the **keyboard highlight** to the **first list item** whose display text **starts with** the current type-ahead string (**case-insensitive** prefix match).
+- **List closed:** the first such key **opens** the list and applies the same matching rules (highlight only; **no selection** until **Enter** or **mouse click**, §4.4 / §5).
+- **List open:** each printable key **appends** to a short buffer; the highlight updates to the first prefix match. If the longer string matches nothing, the implementation retries using **only the latest character** (so a mistyped letter can still jump to a valid prefix).
+- **Buffer reset:** the type-ahead string is cleared when it goes **idle** for about **700 ms** between keys, when the list **closes**, or when the list is opened by **clicking** the input (so mouse-open starts with a fresh buffer).
+- **Selection:** typing alone does **not** change the bound value; the user still **Enter**s or **clicks** to confirm (§4.4, §5).
+
 #### 4.2 Close list — ArrowUp / ArrowLeft
 
 - **Both controls:** when the list is **open** and the highlight is on the **first** item, **ArrowUp** and **ArrowLeft** **close** the list.
@@ -354,6 +362,8 @@ Implementations must support **data binding** (e.g. `Value`/`ValueChanged` or `@
 
 - **Prefer C# in Razor over JS:** Favor C# in Razor over JavaScript when implementing behavior; use JS only when necessary (e.g. keydown before Blazor can handle it, or focus in a portal). See §1.
 - **Down / Right / Enter to open list (§4.1), both controls:** When the input has focus and the list is closed, **Down**, **Right**, or **Enter** open the list (they do not close it) and must not change the selected value(s). When **Down** or **Right** opens the list, the **first** item is highlighted. When **Enter** opens the list, no item is highlighted initially. Use a stable marker (e.g. `data-select-single`, `data-select-multi`, or a wrapper class) so keydown (or equivalent) handling applies to the intended control(s).
+- **Type-ahead (§4.1a), both controls:** When the list is **closed**, printable keys are forwarded to `OpenAndTypeAhead`; when **open**, to `HandleTypeAhead` (see `wwwroot/js/bootstrap-select.js`). Prefix matching uses each item’s display text (`TextField` / `ToString()`). Closing the list clears the buffer; scrollbar interaction remains as in issue #3 (dropdown `mousedown` default prevented in markup). **IME:** While composing (e.g. CJK input), `keydown` is ignored for type-ahead (`isComposing` / composition events).
+- **Open-list keyboard handling:** Arrow keys, Enter, Escape, and Tab while the list is open are handled on the **input** `keydown` listener and forwarded to `HandleListKey` (focus stays on the input per §7.4); there is no separate `keydown` listener on the dropdown panel.
 - **Up to close list (§4.2), both controls:** When the list is open and the highlight is on the first item, **ArrowUp** and **ArrowLeft** close the list.
 - **Click input to toggle list (§5.1), both controls:** Click on the input toggles the list (open if closed, close if open).
 - Arrow keys do **not** wrap: **ArrowDown**/**ArrowRight** on the last item do nothing; **ArrowUp**/**ArrowLeft** on the first item close the list (§4.2).
@@ -362,7 +372,7 @@ Implementations must support **data binding** (e.g. `Value`/`ValueChanged` or `@
 - **Single-select, prevent de-selection:** When `AllowDeselect` is false, ignore re-click-on-selected and Enter-on-selected attempts to clear the value. Clear-button behavior when de-selection is prevented is optional (§11).
 - **Lose focus — collapse list; click not lost:** When the control **loses focus** (e.g. **Tab** or **clicking away**), the list must **collapse** (close). When the loss of focus is due to a **click** (clicking away), the click must **not** be lost: e.g. if the user clicks a button while the list is open, the list closes **and** the button receives the click (is activated).
 - **Dark mode support:** All colors use Bootstrap CSS variables (`--bs-body-bg`, `--bs-body-color`, `--bs-primary`, etc.) so the controls adapt to Bootstrap's dark mode theme automatically.
-- **Accessibility:** Uses Bootstrap CSS variables for sizing (e.g. `--bs-body-line-height`) so controls scale correctly when users adjust font size or line height for accessibility.
+- **Accessibility:** Uses Bootstrap CSS variables for sizing (e.g. `--bs-body-line-height`) so controls scale correctly when users adjust font size or line height for accessibility. When `Label` is set, the label uses `for` pointing at the combobox `id` (same stable id as `data-bs-select-id`). When the list is open, the combobox sets `aria-controls` to the listbox element’s `id` (`{id}-listbox`).
 
 ---
 
@@ -374,7 +384,7 @@ The following behaviors are **optional**. Implementations may omit them or defer
 - **Select-all** (SelectMulti): Optional header or action to select all items in the list (default off). A `ShowSelectAll` (or equivalent) parameter may control visibility.
 - **Dropdown icon** (SelectMulti, or both): Optional icon (e.g. arrow on the right) so the control matches the single-select. When implemented, same styling as §8.4. **Note:** This is currently implemented for both Single and Multi.
 - **Floating label** (SelectSingle, SelectMulti): Optional floating-label style for the control. A `FloatingLabel` (or equivalent) parameter may control it.
-- **Search / filter** (both): Optional text filter in or above the list to narrow items. Not in the current required spec.
+- **Search / filter** (both): Optional text filter in or above the list to narrow items. Not in the current required spec. (Distinct from **type-ahead** prefix highlight in §4.1a, which does not remove items from the list.)
 - **Grouping** (both): Optional group headers in the list to organize items. Not in the current required spec.
 
 ---
@@ -391,6 +401,8 @@ This library (`BlazorBootstrapCustomControls`) implements this specification:
 | Shared markup              | `Components/Shared/BlazorBootstrapSelectMarkup.razor`       |
 | Keyboard handling          | `wwwroot/js/bootstrap-select.js`                           |
 | Styles (check-mark, highlight, dropdown) | `wwwroot/css/bootstrap-select.css`              |
+
+Building the RCL copies `wwwroot/js/bootstrap-select.js` and `wwwroot/css/bootstrap-select.css` into `docs/_content/...` and `docs/wwwroot/_content/...` when a `docs` folder exists (keeps checked-in GitHub Pages mirrors aligned). Pre-compressed `*.gz` / `*.br` siblings under `docs/_content` (if present) come from **Blazor publish** static-asset compression and the CI step that copies `publish/wwwroot` into `docs`; they are not updated by that sync target.
 
 ---
 
