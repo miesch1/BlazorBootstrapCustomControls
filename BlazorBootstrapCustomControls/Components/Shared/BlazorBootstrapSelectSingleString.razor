@@ -36,6 +36,8 @@
   [Parameter] public bool DropdownMatchInputWidth { get; set; }
   [Parameter] public bool AllowDeselect { get; set; } = true;
   [Parameter] public string? Value { get; set; }
+
+  /// <summary>Invoked with the new string or <c>null</c> when cleared — never <see cref="ChangeEventArgs"/>.</summary>
   [Parameter] public EventCallback<string?> ValueChanged { get; set; }
   [Parameter] public Expression<Func<string?>>? ValidationMessage { get; set; }
 }

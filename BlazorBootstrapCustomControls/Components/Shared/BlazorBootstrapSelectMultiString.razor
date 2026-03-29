@@ -34,6 +34,8 @@
   [Parameter] public bool AutoExpandVertically { get; set; }
   [Parameter] public bool DropdownMatchInputWidth { get; set; }
   [Parameter] public string[]? Value { get; set; }
+
+  /// <summary>Invoked with the new selection array — never <see cref="ChangeEventArgs"/>.</summary>
   [Parameter] public EventCallback<string[]?> ValueChanged { get; set; }
   [Parameter] public Expression<Func<string[]?>>? ValidationMessage { get; set; }
 }

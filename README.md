@@ -125,12 +125,14 @@ This section documents the complete functional and visual requirements that this
 
 ### 1. Component Overview
 
-| Component        | Type          | Value Type  | Description                                |
-|------------------|---------------|-------------|--------------------------------------------|
-| **SelectSingle** | Single-select | `string?`   | One item selectable; re-selecting clears unless de-selection is prevented.  |
-| **SelectMulti**  | Multi-select  | `string[]?` | Multiple items; re-selecting clears; comma-separated in the input.  |
+| Component        | Type          | Bound value (generic API) | Description                                |
+|------------------|---------------|---------------------------|--------------------------------------------|
+| **SelectSingle** | Single-select | `TValue?`                 | One item selectable; re-selecting clears unless de-selection is prevented.  |
+| **SelectMulti**  | Multi-select  | `TValue[]?`               | Multiple items; re-selecting toggles; comma-separated in the input.  |
 
-Both share: generic `TItem`, `TextField` / `ValueField` mapping, `Label`, `PlaceholderText`, `Width`, `Disabled`, `ShowClearButton`, and optional `ValidationMessage`.
+Implementations are **`BlazorBootstrapSelectSingle` / `BlazorBootstrapSelectMulti`** with type parameters **`TItem`** (items in `Data`) and **`TValue`** (bound value). **`BlazorBootstrapSelectSingleString`** and **`BlazorBootstrapSelectMultiString`** fix both to **`string`** and omit `TextField` / `ValueField` (they use identity mapping).
+
+Both families share: `Label`, `PlaceholderText`, `Width`, `Disabled`, `ShowClearButton`, and optional `ValidationMessage` (types follow `TValue`; see §9).
 
 In this spec, **control** means the whole SelectSingle or SelectMulti component; **input** means the focusable value-display part of the control.
 
@@ -313,48 +315,82 @@ Implementations must work within a **Bootstrap 5** (or compatible) stylesheet:
 
 ### 9. API and Parameters
 
-Implementations must support **data binding** (e.g. `Value`/`ValueChanged` or `@bind-Value`). The following parameters support binding and configuration.
+Implementations must support **data binding** with **`Value`**, **`ValueChanged`**, and **`@bind-Value`**. `ValueChanged` is always an **`EventCallback<…>`** carrying the new value (or `default` / empty array when cleared)—not `ChangeEventArgs` (see §10).
 
-#### SelectSingle
+Parameters below match **`BlazorBootstrapSelectSingle`**, **`BlazorBootstrapSelectMulti`**, and the **`*String`** wrappers. Generic components use **`[Parameter(CaptureUnmatchedValues = true)]`** on `AdditionalAttributes`; the `*String` wrappers only forward declared parameters (no unmatched capture)—use the generic components if you need arbitrary extra attributes on the outer element.
 
-| Parameter         | Type                      | Description                          |
+#### BlazorBootstrapSelectSingle (`TItem`, `TValue`)
+
+| Parameter         | Type                              | Description                          |
+|------------------|-----------------------------------|--------------------------------------|
+| `Label`          | `string?`                         | Label above the control.             |
+| `PlaceholderText`| `string?`                         | Placeholder when empty.              |
+| `Data`           | `IEnumerable<TItem>?`             | Data source.                         |
+| `TextField`      | `Func<TItem, string>?`           | Display text per item.               |
+| `ValueField`     | `Func<TItem, TValue>?`           | Bound value per item (required when `TItem` is not `TValue`; see base `GetValue`). |
+| `Value`          | `TValue?`                         | Bound value.                         |
+| `ValueChanged`   | `EventCallback<TValue?>`        | Fired with the new value after user action (never `ChangeEventArgs`). |
+| `Class`          | `string?`                         | Additional CSS classes on the interactive surface (e.g. `\"is-invalid\"`). |
+| `Width`          | `string?`                         | Control width (e.g. `300px`, `100%`). |
+| `AutoExpandVertically` | `bool` (default false)    | When true, displayed text wraps vertically when it exceeds width (§8.5). |
+| `DropdownMatchInputWidth` | `bool` (default false) | When true, dropdown width matches the input width. |
+| `IsInvalid`      | `bool` (default false)          | Invalid visual state (Bootstrap-compatible). |
+| `Disabled`       | `bool`                            | Disable control.                     |
+| `InputAttributes`| `IDictionary<string, object>?`    | Splatted onto the combobox surface. `onchange` / `oninput` keys are omitted at render (§10). |
+| `AdditionalAttributes` | `IDictionary<string, object>?` | Unmatched parameters / splat on the **outer** wrapper. Same stripping of `onchange` / `oninput` (§10). |
+| `ValidationMessage` | `Expression<Func<TValue?>>?`     | For `ValidationMessage` / `EditForm`. |
+| `AllowDeselect`  | `bool` (default true)             | When false, re-click and clear cannot clear the selection. |
+| `ShowClearButton` | `bool` (default true)           | Clear button (×) when a value is selected and `AllowDeselect` is true. |
+
+#### BlazorBootstrapSelectMulti (`TItem`, `TValue`)
+
+| Parameter         | Type                               | Description                          |
+|------------------|------------------------------------|--------------------------------------|
+| `Label`          | `string?`                          | Label above the control.             |
+| `PlaceholderText`| `string?`                          | Placeholder when empty.              |
+| `Data`           | `IEnumerable<TItem>?`             | Data source.                         |
+| `TextField`      | `Func<TItem, string>?`            | Display text per item.               |
+| `ValueField`     | `Func<TItem, TValue>?`            | Bound value per item.                |
+| `Value`          | `TValue[]?`                        | Bound selection.                     |
+| `ValueChanged`   | `EventCallback<TValue[]?>`        | Fired with the new array (empty when cleared). Never `ChangeEventArgs`. |
+| `Class`          | `string?`                          | Additional CSS classes on the interactive surface. |
+| `Width`          | `string?`                          | Control width.                       |
+| `AutoExpandVertically` | `bool` (default false)     | Same as single (§8.5).               |
+| `DropdownMatchInputWidth` | `bool` (default false)  | Same as single.                      |
+| `IsInvalid`      | `bool` (default false)           | Same as single.                      |
+| `Disabled`       | `bool`                             | Disable control.                     |
+| `InputAttributes`| `IDictionary<string, object>?`     | Same as single (stripping §10).      |
+| `AdditionalAttributes` | `IDictionary<string, object>?` | Same as single.                      |
+| `ValidationMessage` | `Expression<Func<TValue[]?>>?` | For validation.                      |
+| `ShowClearButton` | `bool` (default true)            | Clear button when at least one value is selected. |
+
+#### BlazorBootstrapSelectSingleString
+
+Thin wrapper: `TItem` and `TValue` are both **`string`**; `TextField` and `ValueField` are fixed to identity (`s => s`). Same parameters as **BlazorBootstrapSelectSingle** except:
+
+| Parameter         | Type                      | Notes                                |
 |------------------|---------------------------|--------------------------------------|
-| `Label`          | `string?`                 | Label above the control.             |
-| `PlaceholderText`| `string?`                 | Placeholder when empty.              |
-| `Data`           | `IEnumerable<TItem>`      | Data source.                         |
-| `TextField`      | `Func<TItem, string>?`    | Display text.                        |
-| `ValueField`     | `Func<TItem, string>?`    | Value.                               |
-| `Value`          | `string?`                 | Bound value.                         |
-| `ValueChanged`   | `EventCallback<string?>`  | Notify value change.                 |
-| `Class`          | `string?`                 | Additional CSS classes applied to the interactive input surface (e.g. `\"is-invalid\"`). |
-| `Width`          | `string?`                 | Control width.                       |
-| `AutoExpandVertically` | `bool` (default false) | When true, input wraps and grows vertically when text exceeds width; otherwise overflow is truncated with ellipsis (§8.5). |
-| `DropdownMatchInputWidth` | `bool` (default false) | When false, dropdown width auto-sizes to content. When true, dropdown width matches the select input width. |
-| `IsInvalid`      | `bool` (default false)    | When true, renders the input in an invalid state (adds Bootstrap-compatible invalid styling in addition to `Class`). |
-| `Disabled`       | `bool`                    | Disable control.                     |
-| `ValidationMessage` | `Expression<Func<string?>>?` | For validation.                  |
-| `AllowDeselect`  | `bool` (default true)     | When false, prevents de-selecting: re-click and clear do not clear the value.     |
-| `ShowClearButton` | `bool` (default true)    | When true, shows a clear button (×) when a value is selected and `AllowDeselect` is true. |
+| `Data`           | `IEnumerable<string>?`    | Item list.                           |
+| `Value`          | `string?`                 |                                      |
+| `ValueChanged`   | `EventCallback<string?>`  | Equivalent to `EventCallback<TValue?>` with `TValue = string`. |
+| `ValidationMessage` | `Expression<Func<string?>>?` |                                  |
+| *(no)* `TextField`, `ValueField` | — | Omitted on the wrapper.          |
+| *(no)* `AdditionalAttributes` capture | — | Use **BlazorBootstrapSelectSingle** for unmatched splat. |
+| `InputAttributes`| `IDictionary<string, object>?` | Forwarded; stripping still applied inside the generic implementation. |
 
-#### SelectMulti
+#### BlazorBootstrapSelectMultiString
 
-| Parameter         | Type                       | Description                          |
-|------------------|----------------------------|--------------------------------------|
-| `Label`          | `string?`                  | Label above the control.             |
-| `PlaceholderText`| `string?`                  | Placeholder when empty.              |
-| `Data`           | `IEnumerable<TItem>`       | Data source.                         |
-| `TextField`      | `Func<TItem, string>?`     | Display text.                        |
-| `ValueField`     | `Func<TItem, string>?`    | Value.                               |
-| `Value`          | `string[]?`                | Bound value.                         |
-| `ValueChanged`   | `EventCallback<string[]?>` | Notify value change.                 |
-| `Class`          | `string?`                  | Additional CSS classes applied to the interactive input surface (e.g. `\"is-invalid\"`). |
-| `Width`          | `string?`                  | Control width.                       |
-| `AutoExpandVertically` | `bool` (default false) | When true, input wraps and grows vertically when text exceeds width; otherwise overflow is truncated with ellipsis (§8.5). |
-| `DropdownMatchInputWidth` | `bool` (default false) | When false, dropdown width auto-sizes to content. When true, dropdown width matches the select input width. |
-| `IsInvalid`      | `bool` (default false)     | When true, renders the input in an invalid state (adds Bootstrap-compatible invalid styling in addition to `Class`). |
-| `Disabled`       | `bool`                     | Disable control.                     |
-| `ValidationMessage` | `Expression<Func<string[]?>>?` | For validation.                 |
-| `ShowClearButton` | `bool` (default true)     | When true, shows a clear button (×) when one or more values are selected. |
+Same idea as **BlazorBootstrapSelectSingleString** for multi-select:
+
+| Parameter         | Type                        | Notes                                |
+|------------------|-----------------------------|--------------------------------------|
+| `Data`           | `IEnumerable<string>?`      |                                      |
+| `Value`          | `string[]?`                 |                                      |
+| `ValueChanged`   | `EventCallback<string[]?>`  |                                      |
+| `ValidationMessage` | `Expression<Func<string[]?>>?` |                               |
+| *(no)* `TextField`, `ValueField` | — |                                      |
+| *(no)* `AdditionalAttributes` capture | — | Use **BlazorBootstrapSelectMulti** for unmatched splat. |
+| `InputAttributes`| `IDictionary<string, object>?` | Same as **BlazorBootstrapSelectSingleString**. |
 
 ---
 
@@ -373,6 +409,7 @@ Implementations must support **data binding** (e.g. `Value`/`ValueChanged` or `@
 - **Lose focus — collapse list; click not lost:** When the control **loses focus** (e.g. **Tab** or **clicking away**), the list must **collapse** (close). When the loss of focus is due to a **click** (clicking away), the click must **not** be lost: e.g. if the user clicks a button while the list is open, the list closes **and** the button receives the click (is activated).
 - **Dark mode support:** All colors use Bootstrap CSS variables (`--bs-body-bg`, `--bs-body-color`, `--bs-primary`, etc.) so the controls adapt to Bootstrap's dark mode theme automatically.
 - **Accessibility:** Uses Bootstrap CSS variables for sizing (e.g. `--bs-body-line-height`) so controls scale correctly when users adjust font size or line height for accessibility. When `Label` is set, the label uses `for` pointing at the combobox `id` (same stable id as `data-bs-select-id`). When the list is open, the combobox sets `aria-controls` to the listbox element’s `id` (`{id}-listbox`).
+- **Data binding / attribute splat:** Use `Value` / `ValueChanged` or `@bind-Value` only. Do not splat `onchange` / `oninput` onto the control (or into `InputAttributes` / unmatched attributes): those are for native `<input>` elements and use `ChangeEventArgs`, which does not match this control’s typed callbacks. As a safeguard, the implementation strips `onchange`/`oninput` from copies used for render so mistaken copy-paste from input components does not attach those handlers to the div combobox.
 
 ---
 

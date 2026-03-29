@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BlazorBootstrapCustomControls.Components.Shared;
 
@@ -139,6 +141,17 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   [Parameter(CaptureUnmatchedValues = true)]
   public IDictionary<string, object>? AdditionalAttributes { get; set; }
 
+  /// <summary>
+  /// <see cref="InputAttributes"/> without splatted <c>onchange</c>/<c>oninput</c>. Those wire
+  /// <see cref="ChangeEventArgs"/> for native inputs; this control uses <c>Value</c>/<c>ValueChanged</c> only.
+  /// </summary>
+  protected IDictionary<string, object>? RenderInputAttributes { get; private set; }
+
+  /// <summary>
+  /// <see cref="AdditionalAttributes"/> without <c>onchange</c>/<c>oninput</c> (same rationale as <see cref="RenderInputAttributes"/>).
+  /// </summary>
+  protected IDictionary<string, object>? RenderAdditionalAttributes { get; private set; }
+
   protected override void OnInitialized()
   {
     // Create DotNetObjectReference - this works because JSInvokable methods are on the base class
@@ -150,7 +163,49 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
     _items = (Data ?? Enumerable.Empty<TItem>())
       .Select(x => new SelectItem<TValue>(TextField?.Invoke(x) ?? x?.ToString() ?? "", GetValue(x)))
       .ToList();
+    RenderInputAttributes = CopyWithoutDomTextChangeHandlers(InputAttributes);
+    RenderAdditionalAttributes = CopyWithoutDomTextChangeHandlers(AdditionalAttributes);
   }
+
+  /// <summary>
+  /// The combobox surface is a div, not a native text input. Splatted <c>onchange</c>/<c>oninput</c> would invoke
+  /// <see cref="ChangeEventArgs"/> handlers and confuse two-way binding; drop them on a copied dictionary (the caller’s dict is unchanged).
+  /// The copy uses the source’s string key comparer when it is a <see cref="Dictionary{TKey,TValue}"/> or
+  /// <see cref="ConcurrentDictionary{TKey,TValue}"/>; otherwise <see cref="StringComparer.Ordinal"/> (default for new string-key dictionaries).
+  /// </summary>
+  private static IDictionary<string, object>? CopyWithoutDomTextChangeHandlers(IDictionary<string, object>? source)
+  {
+    if (source is null || source.Count == 0) return source;
+
+    var hasBlocked = false;
+    foreach (var k in source.Keys)
+    {
+      if (IsDomTextChangeAttributeKey(k))
+      {
+        hasBlocked = true;
+        break;
+      }
+    }
+
+    if (!hasBlocked) return source;
+
+    var comparer = KeyComparerFor(source);
+    return source
+      .Where(kv => !IsDomTextChangeAttributeKey(kv.Key))
+      .ToDictionary(static kv => kv.Key, static kv => kv.Value, comparer);
+  }
+
+  private static IEqualityComparer<string> KeyComparerFor(IDictionary<string, object> source) =>
+    source switch
+    {
+      Dictionary<string, object> d => d.Comparer,
+      ConcurrentDictionary<string, object> cd => cd.Comparer,
+      _ => StringComparer.Ordinal
+    };
+
+  private static bool IsDomTextChangeAttributeKey(string key) =>
+    key.Equals("onchange", StringComparison.OrdinalIgnoreCase)
+    || key.Equals("oninput", StringComparison.OrdinalIgnoreCase);
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
