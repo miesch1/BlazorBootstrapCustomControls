@@ -18,6 +18,16 @@
                              AutoExpandVertically="@AutoExpandVertically"
                              DropdownMatchInputWidth="@DropdownMatchInputWidth"
                              AllowDeselect="@AllowDeselect"
+                             ItemTemplate="@ItemTemplate"
+                             SelectedValueTemplate="@SelectedValueTemplate"
+                             IconContent="@IconContent"
+                             IconAriaLabelField="@IconAriaLabelField"
+                             IconRenderMode="@IconRenderMode"
+                             IconPlacement="@IconPlacement"
+                             ShowIconInSelectedValue="@ShowIconInSelectedValue"
+                             ShowSemanticPillInSelectedValue="@ShowSemanticPillInSelectedValue"
+                             SemanticField="@SemanticField"
+                             SemanticTextField="@SemanticTextField"
                              Value="@Value"
                              ValueChanged="@ValueChanged"
                              ValidationMessage="@ValidationMessage" />
@@ -35,6 +45,16 @@
   [Parameter] public bool AutoExpandVertically { get; set; }
   [Parameter] public bool DropdownMatchInputWidth { get; set; }
   [Parameter] public bool AllowDeselect { get; set; } = true;
+  [Parameter] public RenderFragment<SelectItemContext<string, string>>? ItemTemplate { get; set; }
+  [Parameter] public RenderFragment<SelectItemContext<string, string>>? SelectedValueTemplate { get; set; }
+  [Parameter] public Func<string, string?>? IconContent { get; set; }
+  [Parameter] public Func<string, string?>? IconAriaLabelField { get; set; }
+  [Parameter] public SelectIconRenderMode IconRenderMode { get; set; } = SelectIconRenderMode.CssClass;
+  [Parameter] public SelectIconPlacement IconPlacement { get; set; } = SelectIconPlacement.Start;
+  [Parameter] public bool ShowIconInSelectedValue { get; set; } = true;
+  [Parameter] public bool ShowSemanticPillInSelectedValue { get; set; } = true;
+  [Parameter] public Func<string, SelectSemantic>? SemanticField { get; set; }
+  [Parameter] public Func<string, string?>? SemanticTextField { get; set; }
   [Parameter] public string? Value { get; set; }
 
   /// <summary>Invoked with the new string or <c>null</c> when cleared — never <see cref="ChangeEventArgs"/>.</summary>

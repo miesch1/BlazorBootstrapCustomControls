@@ -1,4 +1,5 @@
 @* Shared markup for BlazorBootstrapSelectSingle and BlazorBootstrapSelectMulti. Reduces duplication. *@
+@typeparam TItem
 @typeparam TValue
 
 @* When DropdownMatchInputWidth: only shrink wrapper when Width is set, so input stays full-width by default. *@
@@ -21,7 +22,7 @@
        @onclick="async () => await OnInputClick.InvokeAsync()"
        @onclick:preventDefault="false"
        @onblur="async () => await OnInputBlur.InvokeAsync()">
-    <span class="bs-select-text @(IsPlaceholder ? "placeholder" : "") @((ShowClearButton && ShouldShowClearButton) ? "has-clear-button" : "")">@DisplayText</span>
+    <span class="bs-select-text @(IsPlaceholder ? "placeholder" : "") @((ShowClearButton && ShouldShowClearButton) ? "has-clear-button" : "")" aria-label="@DisplayAriaLabel">@DisplayContent</span>
     @* Clear button: not focusable (same as dropdown arrow); use DEL when input has focus to clear. *@
     @if (ShowClearButton && ShouldShowClearButton)
     {
@@ -40,16 +41,42 @@
         var ii = i;
         var val = item.Value;
         var sel = IsItemSelected(val);
+        var highlighted = ii == HighlightedIndex;
+        var ctx = CreateItemContext(item, sel, highlighted);
         <div class="bs-select-item @(ii == HighlightedIndex ? "bs-select-kbd-focus" : "")"
              role="option"
              aria-selected="@sel"
+             aria-label="@GetOptionAriaLabel(ctx)"
              data-value="@ii"
              @onclick="async () => await SelectItem.InvokeAsync(val)"
              @onclick:stopPropagation="true"
              @onmousedown="async () => await OnItemMouseDown.InvokeAsync()"
              @onmousedown:preventDefault="true"
              @onmouseenter="async () => await OnItemHover.InvokeAsync(ii)">
-          <span class="bs-select-item-text">@item.Text</span>
+          @if (ItemTemplate is not null)
+          {
+            @ItemTemplate(ctx)
+          }
+          else
+          {
+            var iconVal = IconContent?.Invoke(item.Item);
+            var hasIcon = !string.IsNullOrWhiteSpace(iconVal);
+            <span class="d-flex align-items-center gap-2 flex-grow-1 min-w-0">
+              @if (IconPlacement == SelectIconPlacement.Start && hasIcon)
+              {
+                @RenderConvenienceListIcon(iconVal!, item.Item)
+              }
+              <span class="bs-select-item-text">@item.Text</span>
+              @if (!string.IsNullOrWhiteSpace(ctx.SemanticText))
+              {
+                <span class="@SelectSemanticCss.GetChipClasses(ctx.Semantic)">@ctx.SemanticText</span>
+              }
+              @if (IconPlacement == SelectIconPlacement.End && hasIcon)
+              {
+                @RenderConvenienceListIcon(iconVal!, item.Item)
+              }
+            </span>
+          }
           @if (sel)
           {
             <span class="check-mark"></span>
@@ -71,14 +98,21 @@
   [Parameter] public bool DropdownMatchInputWidth { get; set; }
   [Parameter] public bool Disabled { get; set; }
   [Parameter] public bool Open { get; set; }
-  [Parameter] public string DisplayText { get; set; } = "";
+  [Parameter] public string DisplayAriaLabel { get; set; } = "";
+  [Parameter] public RenderFragment? DisplayContent { get; set; }
   [Parameter] public bool IsPlaceholder { get; set; }
   [Parameter] public bool ShowClearButton { get; set; }
   [Parameter] public bool ShouldShowClearButton { get; set; }
   [Parameter] public bool IsMulti { get; set; }
-  [Parameter] public IReadOnlyList<SelectItem<TValue>> Items { get; set; } = Array.Empty<SelectItem<TValue>>();
+  [Parameter] public IReadOnlyList<SelectItem<TItem, TValue>> Items { get; set; } = Array.Empty<SelectItem<TItem, TValue>>();
   [Parameter] public int HighlightedIndex { get; set; }
   [Parameter] public Func<TValue, bool> IsItemSelected { get; set; } = _ => false;
+  [Parameter] public Func<SelectItem<TItem, TValue>, bool, bool, SelectItemContext<TItem, TValue>> CreateItemContext { get; set; } = (_, _, _) => default;
+  [Parameter] public RenderFragment<SelectItemContext<TItem, TValue>>? ItemTemplate { get; set; }
+  [Parameter] public Func<TItem, string?>? IconContent { get; set; }
+  [Parameter] public Func<TItem, string?>? IconAriaLabelField { get; set; }
+  [Parameter] public SelectIconRenderMode IconRenderMode { get; set; }
+  [Parameter] public SelectIconPlacement IconPlacement { get; set; }
   [Parameter] public IDictionary<string, object>? AdditionalAttributes { get; set; }
   [Parameter] public EventCallback OnInputClick { get; set; }
   [Parameter] public EventCallback OnInputBlur { get; set; }
@@ -96,4 +130,38 @@
     + (AutoExpandVertically ? " bs-select-auto-expand" : string.Empty)
     + (IsInvalid ? " is-invalid" : string.Empty)
     + (string.IsNullOrWhiteSpace(Class) ? string.Empty : " " + Class);
+
+  private static string GetOptionAriaLabel(SelectItemContext<TItem, TValue> context) =>
+    string.IsNullOrWhiteSpace(context.SemanticText)
+      ? context.Text
+      : $"{context.Text}, {context.SemanticText}";
+
+  private RenderFragment RenderConvenienceListIcon(string iconVal, TItem dataItem) => builder =>
+  {
+    var seq = 0;
+    var aria = IconAriaLabelField?.Invoke(dataItem);
+    if (IconRenderMode == SelectIconRenderMode.CssClass)
+    {
+      builder.OpenElement(seq++, "i");
+      builder.AddAttribute(seq++, "class", iconVal);
+      if (!string.IsNullOrEmpty(aria))
+        builder.AddAttribute(seq++, "aria-label", aria);
+      else
+        builder.AddAttribute(seq++, "aria-hidden", "true");
+      builder.CloseElement();
+    }
+    else
+    {
+      builder.OpenElement(seq++, "span");
+      if (!string.IsNullOrEmpty(aria))
+      {
+        builder.AddAttribute(seq++, "role", "img");
+        builder.AddAttribute(seq++, "aria-label", aria);
+      }
+      else
+        builder.AddAttribute(seq++, "aria-hidden", "true");
+      builder.AddContent(seq++, iconVal);
+      builder.CloseElement();
+    }
+  };
 }
