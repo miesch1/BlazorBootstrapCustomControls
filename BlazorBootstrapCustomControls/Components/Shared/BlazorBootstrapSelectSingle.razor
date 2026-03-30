@@ -10,7 +10,7 @@
                        AutoExpandVertically="@AutoExpandVertically"
                        Class="@Class"
                        IsInvalid="@IsInvalid"
-                       InputAttributes="@InputAttributes"
+                       InputAttributes="@RenderInputAttributes"
                        DropdownMatchInputWidth="@DropdownMatchInputWidth"
                        Disabled="@Disabled"
                        Open="@_open"
@@ -22,7 +22,7 @@
                        Items="@_items"
                        HighlightedIndex="@_highlightedIndex"
                        IsItemSelected="@IsItemSelected"
-                       AdditionalAttributes="@AdditionalAttributes"
+                       AdditionalAttributes="@RenderAdditionalAttributes"
                        OnInputClick="@OnInputClick"
                        OnInputBlur="@OnInputBlur"
                        OnClear="@OnClear"
@@ -43,6 +43,7 @@
 
   /// <summary>
   /// Gets or sets the callback that is invoked when the selected value changes.
+  /// Receives the new <typeparamref name="TValue"/> or <c>default</c> when cleared — never <see cref="ChangeEventArgs"/>.
   /// </summary>
   [Parameter] public EventCallback<TValue?> ValueChanged { get; set; }
 

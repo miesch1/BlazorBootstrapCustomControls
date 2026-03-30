@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace BlazorBootstrapCustomControls.Components.Shared;
 
@@ -25,6 +27,12 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   private string _typeAheadBuffer = string.Empty;
   private DateTime _lastTypeAheadInputUtc = DateTime.MinValue;
   private const int TypeAheadResetMilliseconds = 700;
+
+  /// <summary>
+  /// True after <c>BSSelect.init</c> / <c>registerInputKeys</c> ran in an interactive render.
+  /// Used to skip JS teardown in <see cref="DisposeAsync"/> when prerender/SSR disposes the tree before interop is allowed (issue #7).
+  /// </summary>
+  private bool _bssSelectJsRegistered;
 
   /// <summary>Snapshot of <see cref="Data"/> built in <see cref="OnParametersSet"/> (avoids reallocating on every access).</summary>
   protected IReadOnlyList<SelectItem<TValue>> _items = Array.Empty<SelectItem<TValue>>();
@@ -139,6 +147,17 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   [Parameter(CaptureUnmatchedValues = true)]
   public IDictionary<string, object>? AdditionalAttributes { get; set; }
 
+  /// <summary>
+  /// <see cref="InputAttributes"/> without splatted <c>onchange</c>/<c>oninput</c>. Those wire
+  /// <see cref="ChangeEventArgs"/> for native inputs; this control uses <c>Value</c>/<c>ValueChanged</c> only.
+  /// </summary>
+  protected IDictionary<string, object>? RenderInputAttributes { get; private set; }
+
+  /// <summary>
+  /// <see cref="AdditionalAttributes"/> without <c>onchange</c>/<c>oninput</c> (same rationale as <see cref="RenderInputAttributes"/>).
+  /// </summary>
+  protected IDictionary<string, object>? RenderAdditionalAttributes { get; private set; }
+
   protected override void OnInitialized()
   {
     // Create DotNetObjectReference - this works because JSInvokable methods are on the base class
@@ -150,16 +169,62 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
     _items = (Data ?? Enumerable.Empty<TItem>())
       .Select(x => new SelectItem<TValue>(TextField?.Invoke(x) ?? x?.ToString() ?? "", GetValue(x)))
       .ToList();
+    RenderInputAttributes = CopyWithoutDomTextChangeHandlers(InputAttributes);
+    RenderAdditionalAttributes = CopyWithoutDomTextChangeHandlers(AdditionalAttributes);
   }
+
+  /// <summary>
+  /// The combobox surface is a div, not a native text input. Splatted <c>onchange</c>/<c>oninput</c> would invoke
+  /// <see cref="ChangeEventArgs"/> handlers and confuse two-way binding; drop them on a copied dictionary (the caller’s dict is unchanged).
+  /// The copy uses the source’s string key comparer when it is a <see cref="Dictionary{TKey,TValue}"/> or
+  /// <see cref="ConcurrentDictionary{TKey,TValue}"/>; otherwise <see cref="StringComparer.Ordinal"/> (default for new string-key dictionaries).
+  /// </summary>
+  private static IDictionary<string, object>? CopyWithoutDomTextChangeHandlers(IDictionary<string, object>? source)
+  {
+    if (source is null || source.Count == 0) return source;
+
+    var hasBlocked = false;
+    foreach (var k in source.Keys)
+    {
+      if (IsDomTextChangeAttributeKey(k))
+      {
+        hasBlocked = true;
+        break;
+      }
+    }
+
+    if (!hasBlocked) return source;
+
+    var comparer = KeyComparerFor(source);
+    return source
+      .Where(kv => !IsDomTextChangeAttributeKey(kv.Key))
+      .ToDictionary(static kv => kv.Key, static kv => kv.Value, comparer);
+  }
+
+  private static IEqualityComparer<string> KeyComparerFor(IDictionary<string, object> source) =>
+    source switch
+    {
+      Dictionary<string, object> d => d.Comparer,
+      ConcurrentDictionary<string, object> cd => cd.Comparer,
+      _ => StringComparer.Ordinal
+    };
+
+  private static bool IsDomTextChangeAttributeKey(string key) =>
+    key.Equals("onchange", StringComparison.OrdinalIgnoreCase)
+    || key.Equals("oninput", StringComparison.OrdinalIgnoreCase);
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
-    if (firstRender)
+    // Prerender / static SSR: not interactive — skip JS (same InvalidOperationException as dispose if invoked).
+    // After prerender, the component renders again with an interactive RendererInfo; init then (even if firstRender is false).
+    if (!_bssSelectJsRegistered && RendererInfo.IsInteractive)
     {
       await JS.InvokeVoidAsync("BSSelect.init", _id, _dotNetRef);
       await JS.InvokeVoidAsync("BSSelect.registerInputKeys", _id, _dotNetRef);
+      _bssSelectJsRegistered = true;
     }
-    if (_open && _justOpened)
+
+    if (_bssSelectJsRegistered && _open && _justOpened)
     {
       _justOpened = false;
       // Keep focus on input (per §7.4) - don't move focus to list items
@@ -175,6 +240,7 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   /// <summary>
   /// Blazor awaits this when the component is removed, so JS teardown and <see cref="DotNetObjectReference{TValue}"/>
   /// disposal complete before the instance is released (no fire-and-forget from sync <c>IDisposable</c>).
+  /// Skips JS teardown when interop never ran (e.g. prerender-only disposal — issue #7).
   /// </summary>
   public async ValueTask DisposeAsync()
   {
@@ -183,7 +249,8 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
 
     try
     {
-      await JS.InvokeVoidAsync("BSSelect.teardown", _id);
+      if (_bssSelectJsRegistered)
+        await JS.InvokeVoidAsync("BSSelect.teardown", _id);
     }
     catch (JSDisconnectedException)
     {
