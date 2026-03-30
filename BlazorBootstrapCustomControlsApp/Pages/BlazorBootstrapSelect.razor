@@ -45,6 +45,22 @@
 
 <p class="mt-2">Selected: @selectedSportCustomWidth</p>
 
+<BlazorBootstrapSelectSingle TItem="SportOption" TValue="string"
+                             Label="Single Sport (Icon convenience API — Bootstrap Icons CssClass)"
+                             Data="@SportOptions"
+                             TextField="s => s.Name"
+                             ValueField="s => s.Id"
+                             PlaceholderText="-- Select Sport --"
+                             IconContent="s => s.IconClass"
+                             IconRenderMode="SelectIconRenderMode.CssClass"
+                             IconPlacement="SelectIconPlacement.Start"
+                             SemanticField="s => s.Semantic"
+                             SemanticTextField="s => s.SemanticLabel"
+                             @bind-Value="@selectedSportConvenience" />
+
+<p class="text-muted small">Requires Bootstrap Icons CSS (e.g. <code>&lt;link href=&quot;...bootstrap-icons...&quot;&gt;</code>).</p>
+<p class="mt-2">Selected: @selectedSportConvenience</p>
+
 <BlazorBootstrapSelectSingleString Label="Single Sport (Validation Demo)"
                                    Data="@Sports"
                                    PlaceholderText="-- Select Sport --"
@@ -85,6 +101,35 @@
 
 <p class="mt-2">Selected: @string.Join(", ", selectedSportsCustom ?? Array.Empty<string>())</p>
 
+<p class="text-muted small">Settings for <strong>Multiple Sports (Icon + Pill template)</strong>.</p>
+<div class="form-check mb-2">
+  <input class="form-check-input" type="checkbox" id="iconPillAutoExpandToggle" @bind="@iconPillAutoExpandEnabled" />
+  <label class="form-check-label" for="iconPillAutoExpandToggle">
+    Auto-expand input (icon + pill example)
+  </label>
+</div>
+<div class="form-check mb-2">
+  <input class="form-check-input" type="checkbox" id="semanticPillAlignRightToggle" @bind="@semanticPillAlignRight" />
+  <label class="form-check-label" for="semanticPillAlignRightToggle">
+    Align semantic pills to the right (icon + pill example rows)
+  </label>
+</div>
+
+<BlazorBootstrapSelectMulti TItem="SportOption" TValue="string"
+                            Label="Multiple Sports (Icon + Pill template)"
+                            Data="@SportOptions"
+                            TextField="s => s.Name"
+                            ValueField="s => s.Id"
+                            PlaceholderText="-- Select Sports --"
+                            AutoExpandVertically="@iconPillAutoExpandEnabled"
+                            SemanticField="s => s.Semantic"
+                            SemanticTextField="s => s.SemanticLabel"
+                            @bind-Value="@selectedSportsWithTemplate"
+                            ItemTemplate="@SportItemTemplate"
+                            SelectedValueTemplate="@SportSelectedTemplate" />
+
+<p class="mt-2">Selected: @string.Join(", ", selectedSportsWithTemplate ?? Array.Empty<string>())</p>
+
 <BlazorBootstrapSelectMultiString Label="Multiple Sports (Disabled)"
                                   Data="@Sports"
                                   PlaceholderText="-- Select Sports --"
@@ -104,9 +149,9 @@
 <p class="text-muted small">Ellipsis ("...") when content exceeds width.</p>
 
 <div class="form-check mb-2">
-  <input class="form-check-input" type="checkbox" id="autoExpandToggle" @bind="@autoExpandEnabled" />
-  <label class="form-check-label" for="autoExpandToggle">
-    Enable AutoExpandVertically
+  <input class="form-check-input" type="checkbox" id="plainAutoExpandToggle" @bind="@autoExpandEnabled" />
+  <label class="form-check-label" for="plainAutoExpandToggle">
+    Auto-expand input (plain MultiString example below)
   </label>
 </div>
 
@@ -145,6 +190,12 @@
   {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    /// <summary>Glyph/emoji for template-based multi-select example.</summary>
+    public string Icon { get; set; } = "";
+    /// <summary>Bootstrap Icons class list for single-select convenience API example (e.g. <c>bi bi-trophy</c>).</summary>
+    public string IconClass { get; set; } = "";
+    public SelectSemantic Semantic { get; set; } = SelectSemantic.None;
+    public string? SemanticLabel { get; set; }
   }
 
   private List<string> Sports = new()
@@ -170,13 +221,13 @@
 
   private List<SportOption> SportOptions = new()
   {
-    new() { Id = "1", Name = "Cross-Country, Track & Field" },
-    new() { Id = "2", Name = "Cross-Country" },
-    new() { Id = "3", Name = "Swimming" },
-    new() { Id = "4", Name = "Track & Field" },
-    new() { Id = "5", Name = "Basketball" },
-    new() { Id = "6", Name = "Soccer" },
-    new() { Id = "7", Name = "Tennis" }
+    new() { Id = "1", Name = "Cross-Country, Track & Field", Icon = "🏃", IconClass = "bi bi-lightning-charge", Semantic = SelectSemantic.Warning, SemanticLabel = "Intense" },
+    new() { Id = "2", Name = "Cross-Country", Icon = "🏃", IconClass = "bi bi-stopwatch", Semantic = SelectSemantic.Pending, SemanticLabel = "Seasonal" },
+    new() { Id = "3", Name = "Swimming", Icon = "🏊", IconClass = "bi bi-water", Semantic = SelectSemantic.Info, SemanticLabel = "Pool" },
+    new() { Id = "4", Name = "Track & Field", Icon = "🥇", IconClass = "bi bi-trophy", Semantic = SelectSemantic.Success, SemanticLabel = "Popular" },
+    new() { Id = "5", Name = "Basketball", Icon = "🏀", IconClass = "bi bi-dribbble", Semantic = SelectSemantic.Success, SemanticLabel = "Team" },
+    new() { Id = "6", Name = "Soccer", Icon = "⚽", IconClass = "bi bi-circle", Semantic = SelectSemantic.Danger, SemanticLabel = "Limited slots" },
+    new() { Id = "7", Name = "Tennis", Icon = "🎾", IconClass = "bi bi-activity", Semantic = SelectSemantic.None, SemanticLabel = "Unrated" }
   };
 
   // Single select values
@@ -184,6 +235,7 @@
   private string? selectedSportNoDeselect;
   private string? selectedSportDisabled = "Swimming"; // Pre-selected for disabled example
   private string? selectedSportCustomWidth;
+  private string? selectedSportConvenience = "4";
   private string? singleSportValidation;
   private bool singleSportInvalid = true;
   private string? selectedSportInvalidAutoExpand;
@@ -192,9 +244,63 @@
   private string[]? selectedSportsCustom = Array.Empty<string>();
   private string[]? selectedSportsDisabled = new[] { "Swimming", "Basketball" }; // Pre-selected for disabled example
   private string[]? selectedSportsNoClear = Array.Empty<string>();
+  private string[]? selectedSportsWithTemplate = new[] { "2", "6", "7" };
   private string[]? selectedSportsCustomWidth = Array.Empty<string>();
   private string[]? selectedSportsAutoExpand = Array.Empty<string>();
   private bool autoExpandEnabled = true; // Default to true to show auto-expand behavior initially
+  private bool iconPillAutoExpandEnabled = true;
+
+  private bool semanticPillAlignRight = true;
+
+  private static string GetSemanticChipClass(SelectSemantic semantic) => semantic switch
+  {
+    SelectSemantic.None => "status-chip status-chip-none",
+    SelectSemantic.Pending => "status-chip status-chip-pending",
+    SelectSemantic.Info => "status-chip status-chip-info",
+    SelectSemantic.Success => "status-chip status-chip-success",
+    SelectSemantic.Warning => "status-chip status-chip-warning",
+    SelectSemantic.Danger => "status-chip status-chip-danger",
+    _ => "status-chip status-chip-none"
+  };
+
+  private RenderFragment<SelectItemContext<SportOption, string>> SportItemTemplate => ctx =>
+  {
+    var showPill = !string.IsNullOrWhiteSpace(ctx.SemanticText);
+    var pillClass = GetSemanticChipClass(ctx.Semantic);
+
+    if (semanticPillAlignRight)
+    {
+      return @<div class="d-flex align-items-center gap-2">
+        <span class="d-flex align-items-center gap-2">
+          <span aria-hidden="true">@ctx.Item.Icon</span>
+          <span>@ctx.Text</span>
+        </span>
+        @if (showPill)
+        {
+          <span class="@pillClass ms-auto">@ctx.SemanticText</span>
+        }
+      </div>;
+    }
+
+    // Left-aligned pill right after text.
+    return @<div class="d-flex align-items-center gap-2">
+      <span aria-hidden="true">@ctx.Item.Icon</span>
+      <span>@ctx.Text</span>
+      @if (showPill)
+      {
+        <span class="@pillClass">@ctx.SemanticText</span>
+      }
+    </div>;
+  };
+
+  private static RenderFragment<SelectItemContext<SportOption, string>> SportSelectedTemplate => ctx => @<span class="d-inline-flex align-items-center gap-2">
+    <span aria-hidden="true">@ctx.Item.Icon</span>
+    <span>@ctx.Text</span>
+    @if (!string.IsNullOrWhiteSpace(ctx.SemanticText))
+    {
+      <span class="@GetSemanticChipClass(ctx.Semantic)">@ctx.SemanticText</span>
+    }
+  </span>;
 
   private Task OnSingleSportValidationChanged(string? value)
   {

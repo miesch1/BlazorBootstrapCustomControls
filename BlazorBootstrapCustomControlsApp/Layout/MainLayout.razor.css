@@ -6,6 +6,14 @@
 
 main {
     flex: 1;
+    /* Critical for flex layouts: allow the content column to shrink.
+       Without this, long nowrap children can force page-wide overflow. */
+    min-width: 0;
+}
+
+article {
+    /* Ensure page content can shrink inside the main flex column. */
+    min-width: 0;
 }
 
 .sidebar {

@@ -115,6 +115,7 @@
 /* Input already has padding-right 2.25rem; arrow (right: 0.75rem) sits in that padding, so no text reserve needed */
 .bs-select-text {
   flex: 1;
+  min-width: 0; /* Critical for flex children: allow shrink so ellipsis can apply instead of widening parent */
   text-align: left;
   white-space: nowrap;
   overflow: hidden;
@@ -123,6 +124,11 @@
   /* Parent has align-items: center, so this will be vertically centered */
   background-color: transparent !important; /* Ensure no background on text span */
   padding-right: 0; /* Arrow in input padding; reserve only when clear button visible */
+}
+
+/* Ensure templated inline-flex content can shrink inside the ellipsis container. */
+.bs-select-text > * {
+  min-width: 0;
 }
 
 /* When clear button is visible: reserve space for clear button; avoid over-truncating */
@@ -246,6 +252,9 @@
   margin-top: var(--bs-focus-ring-width, 0.25rem); /* Offset for focus ring; scale with Bootstrap */
   max-height: 17.5rem; /* ~280px at 16px base; rem scales for accessibility */
   overflow-y: auto;
+  /* Prevent dropdown from forcing a horizontal scrollbar for the page. */
+  overflow-x: hidden;
+  max-width: 100vw;
   background: var(--bs-body-bg, #fff);
   border: var(--bs-border-width) solid var(--bs-border-color);
   border-radius: var(--bs-border-radius);
@@ -278,6 +287,54 @@
 
 .bs-select-item-text {
   display: block;
+}
+
+/* Optional semantic chip used by default rendering when SemanticField is provided. */
+.status-chip {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75em;
+  line-height: 1.2;
+  vertical-align: middle;
+  border: 1px solid transparent;
+}
+
+.status-chip.status-chip-none {
+  color: var(--bs-secondary-color, #6c757d);
+  background-color: var(--bs-tertiary-bg, #f8f9fa);
+  border-color: var(--bs-border-color, #dee2e6);
+}
+
+.status-chip.status-chip-pending {
+  color: var(--bs-warning-text-emphasis, #664d03);
+  background-color: var(--bs-warning-bg-subtle, #fff3cd);
+  border-color: var(--bs-warning-border-subtle, #ffecb5);
+}
+
+.status-chip.status-chip-info {
+  color: var(--bs-info-text-emphasis, #055160);
+  background-color: var(--bs-info-bg-subtle, #cff4fc);
+  border-color: var(--bs-info-border-subtle, #b6effb);
+}
+
+.status-chip.status-chip-success {
+  color: var(--bs-success-text-emphasis, #0f5132);
+  background-color: var(--bs-success-bg-subtle, #d1e7dd);
+  border-color: var(--bs-success-border-subtle, #badbcc);
+}
+
+.status-chip.status-chip-warning {
+  color: var(--bs-warning-text-emphasis, #664d03);
+  background-color: var(--bs-warning-bg-subtle, #fff3cd);
+  border-color: var(--bs-warning-border-subtle, #ffecb5);
+}
+
+.status-chip.status-chip-danger {
+  color: var(--bs-danger-text-emphasis, #842029);
+  background-color: var(--bs-danger-bg-subtle, #f8d7da);
+  border-color: var(--bs-danger-border-subtle, #f5c2c7);
 }
 
 /* ==========================================================================

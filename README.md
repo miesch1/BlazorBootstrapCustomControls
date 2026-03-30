@@ -341,6 +341,16 @@ Parameters below match **`BlazorBootstrapSelectSingle`**, **`BlazorBootstrapSele
 | `ValidationMessage` | `Expression<Func<TValue?>>?`     | For `ValidationMessage` / `EditForm`. |
 | `AllowDeselect`  | `bool` (default true)             | When false, re-click and clear cannot clear the selection. |
 | `ShowClearButton` | `bool` (default true)           | Clear button (×) when a value is selected and `AllowDeselect` is true. |
+| `ItemTemplate` | `RenderFragment<SelectItemContext<TItem, TValue>>?` | Optional custom dropdown row (overrides default + convenience icon row). |
+| `SelectedValueTemplate` | `RenderFragment<SelectItemContext<TItem, TValue>>?` | Optional custom selected-value surface (overrides plain text + convenience icon). |
+| `SemanticField` | `Func<TItem, SelectSemantic>?` | Optional semantic for context + default chip. |
+| `SemanticTextField` | `Func<TItem, string?>?` | Optional chip text; defaults to enum label when unset. |
+| `IconContent` | `Func<TItem, string?>?` | Optional convenience icon content (ignored when `ItemTemplate` is set). |
+| `IconAriaLabelField` | `Func<TItem, string?>?` | Optional accessible name; otherwise icon is decorative. |
+| `IconRenderMode` | `SelectIconRenderMode` | `CssClass` (e.g. Bootstrap Icons) or `Text` (emoji/glyph). |
+| `IconPlacement` | `SelectIconPlacement` | `Start` or `End` relative to label text. |
+| `ShowIconInSelectedValue` | `bool` (default true) | Include convenience icon in combobox when not using `SelectedValueTemplate`. |
+| `ShowSemanticPillInSelectedValue` | `bool` (default true) | Include semantic chip in combobox when not using `SelectedValueTemplate`. |
 
 #### BlazorBootstrapSelectMulti (`TItem`, `TValue`)
 
@@ -363,6 +373,16 @@ Parameters below match **`BlazorBootstrapSelectSingle`**, **`BlazorBootstrapSele
 | `AdditionalAttributes` | `IDictionary<string, object>?` | Same as single.                      |
 | `ValidationMessage` | `Expression<Func<TValue[]?>>?` | For validation.                      |
 | `ShowClearButton` | `bool` (default true)            | Clear button when at least one value is selected. |
+| `ItemTemplate` | `RenderFragment<SelectItemContext<TItem, TValue>>?` | Same as single. |
+| `SelectedValueTemplate` | `RenderFragment<SelectItemContext<TItem, TValue>>?` | Same as single. |
+| `SemanticField` | `Func<TItem, SelectSemantic>?` | Same as single. |
+| `SemanticTextField` | `Func<TItem, string?>?` | Same as single. |
+| `IconContent` | `Func<TItem, string?>?` | Same as single. |
+| `IconAriaLabelField` | `Func<TItem, string?>?` | Same as single. |
+| `IconRenderMode` | `SelectIconRenderMode` | Same as single. |
+| `IconPlacement` | `SelectIconPlacement` | Same as single. |
+| `ShowIconInSelectedValue` | `bool` (default true) | Same as single. |
+| `ShowSemanticPillInSelectedValue` | `bool` (default true) | Same as single. |
 
 #### BlazorBootstrapSelectSingleString
 
@@ -377,6 +397,7 @@ Thin wrapper: `TItem` and `TValue` are both **`string`**; `TextField` and `Value
 | *(no)* `TextField`, `ValueField` | — | Omitted on the wrapper.          |
 | *(no)* `AdditionalAttributes` capture | — | Use **BlazorBootstrapSelectSingle** for unmatched splat. |
 | `InputAttributes`| `IDictionary<string, object>?` | Forwarded; stripping still applied inside the generic implementation. |
+| *(also)* `ItemTemplate`, `SelectedValueTemplate`, `SemanticField`, `SemanticTextField`, `IconContent`, `IconAriaLabelField`, `IconRenderMode`, `IconPlacement`, `ShowIconInSelectedValue`, `ShowSemanticPillInSelectedValue` | — | Forwarded to **BlazorBootstrapSelectSingle** (`TItem`/`TValue` = `string`). |
 
 #### BlazorBootstrapSelectMultiString
 
@@ -391,6 +412,53 @@ Same idea as **BlazorBootstrapSelectSingleString** for multi-select:
 | *(no)* `TextField`, `ValueField` | — |                                      |
 | *(no)* `AdditionalAttributes` capture | — | Use **BlazorBootstrapSelectMulti** for unmatched splat. |
 | `InputAttributes`| `IDictionary<string, object>?` | Same as **BlazorBootstrapSelectSingleString**. |
+| *(also)* `ItemTemplate`, `SelectedValueTemplate`, `SemanticField`, `SemanticTextField`, `IconContent`, `IconAriaLabelField`, `IconRenderMode`, `IconPlacement`, `ShowIconInSelectedValue`, `ShowSemanticPillInSelectedValue` | — | Forwarded to **BlazorBootstrapSelectMulti**. |
+
+#### Item icon and pill API (templates vs convenience parameters)
+
+Use **either** full templates **or** the optional **convenience icon** parameters. **If `ItemTemplate` / `SelectedValueTemplate` are set, they take precedence**; convenience `IconContent` is ignored for that surface.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `ItemTemplate` | `RenderFragment<SelectItemContext<TItem, TValue>>?` | Custom row markup for each dropdown item (full layout control). |
+| `SelectedValueTemplate` | `RenderFragment<SelectItemContext<TItem, TValue>>?` | Custom markup for selected value(s) in the combobox. |
+| `SemanticField` / `SemanticTextField` | see §9 tables | Default semantic chips + `SelectItemContext`. |
+| `IconContent` | `Func<TItem, string?>?` | Low-code icon: CSS class string (`IconRenderMode = CssClass`, e.g. Bootstrap Icons) or text/emoji (`Text`). |
+| `IconAriaLabelField` | `Func<TItem, string?>?` | Meaningful icons: supply a short label; otherwise icon is decorative (`aria-hidden`). |
+| `IconRenderMode` | `SelectIconRenderMode` | `CssClass` → `<i class="...">`; `Text` → `<span>…</span>`. |
+| `IconPlacement` | `SelectIconPlacement` | `Start` or `End` next to the item label. |
+| `ShowIconInSelectedValue` / `ShowSemanticPillInSelectedValue` | `bool` | Toggle parts of the default selected-value row when not using `SelectedValueTemplate`. |
+
+**When to use convenience parameters vs templates**
+
+- **Convenience path:** one icon string per row, same layout everywhere (Bootstrap Icons, emoji). Fast to wire; keep icons decorative or set `IconAriaLabelField`.
+- **Template path:** multiple badges, conditional markup, SVG/component icons, or row layouts that vary per item—use `ItemTemplate` / `SelectedValueTemplate` and read `SelectItemContext`.
+
+**Reusing `SelectSemantic` styling outside the select (grids, labels, cards)**
+
+The library maps semantics to **`status-chip` / `status-chip-*`** classes in `bootstrap-select.css`. Use **`SelectSemanticCss`** so grids and forms match the select’s default chips:
+
+```razor
+@using BlazorBootstrapCustomControls.Components.Shared
+
+<span class="@SelectSemanticCss.GetChipClasses(model.Status)">@labelText</span>
+```
+
+- `GetChipModifierClass(SelectSemantic)` returns only the modifier (e.g. `status-chip-warning`).
+- `GetChipClasses(SelectSemantic)` returns `status-chip status-chip-*` for a full badge.
+
+**Consistency:** treat `SelectSemantic` as domain/UI-neutral data; **centralize** display mapping in `SelectSemanticCss` (or your own wrapper that delegates to it) so lists, selects, and detail views stay consistent.
+
+**Reference:** define templates in `@code` (or a shared partial class)—avoid complex inline `RenderFragment` literals in markup (compiler limitations).
+
+**Verification checklist (implementation review)**
+
+1. **Template override:** With both `ItemTemplate` and `IconContent` set, list rows match `ItemTemplate` only; convenience icon does not appear.
+2. **Convenience dropdown + selected:** With `IconContent` + `SemanticField` and no templates, dropdown rows and combobox surface show icon + text + chip (unless toggled off via `Show*` flags).
+3. **CssClass mode:** `IconRenderMode.CssClass` with Bootstrap Icons requires the app to include Bootstrap Icons CSS; verify glyphs render.
+4. **Text mode:** `IconRenderMode.Text` with emoji shows in list and selected area; screen reader gets text from `TextField` / options `aria-label`.
+5. **Multi selected surface:** Multiple selections render comma-separated convenience segments when `SelectedValueTemplate` is null and `IconContent` is set.
+6. **External chip:** A grid cell using `SelectSemanticCss.GetChipClasses` matches select chip colors for the same `SelectSemantic` value.
 
 ---
 
@@ -398,6 +466,7 @@ Same idea as **BlazorBootstrapSelectSingleString** for multi-select:
 
 - **Prefer C# in Razor over JS:** Favor C# in Razor over JavaScript when implementing behavior; use JS only when necessary (e.g. keydown before Blazor can handle it, or focus in a portal). See §1.
 - **Prerender / static SSR (issue #7):** In Blazor Web Apps with default interactive prerender, the control registers `BSSelect.init` only when `RendererInfo.IsInteractive` is true (after the interactive render). `DisposeAsync` calls `BSSelect.teardown` only if that registration ran, so disposal during the static prerender segment does not invoke JS interop or throw `InvalidOperationException`.
+- **Item templates and accessibility:** `ItemTemplate` renders inside the existing `role="option"` container. Keep non-text visuals (icons/pills) decorative and ensure text remains available via `TextField` (type-ahead + accessibility). The control computes option `aria-label` from text + semantic text.
 - **Down / Right / Enter to open list (§4.1), both controls:** When the input has focus and the list is closed, **Down**, **Right**, or **Enter** open the list (they do not close it) and must not change the selected value(s). When **Down** or **Right** opens the list, the **first** item is highlighted. When **Enter** opens the list, no item is highlighted initially. Use a stable marker (e.g. `data-select-single`, `data-select-multi`, or a wrapper class) so keydown (or equivalent) handling applies to the intended control(s).
 - **Type-ahead (§4.1a), both controls:** When the list is **closed**, printable keys are forwarded to `OpenAndTypeAhead`; when **open**, to `HandleTypeAhead` (see `wwwroot/js/bootstrap-select.js`). Prefix matching uses each item’s display text (`TextField` / `ToString()`). Closing the list clears the buffer; scrollbar interaction remains as in issue #3 (dropdown `mousedown` default prevented in markup). **IME:** While composing (e.g. CJK input), `keydown` is ignored for type-ahead (`isComposing` / composition events).
 - **Open-list keyboard handling:** Arrow keys, Enter, Escape, and Tab while the list is open are handled on the **input** `keydown` listener and forwarded to `HandleListKey` (focus stays on the input per §7.4); there is no separate `keydown` listener on the dropdown panel.

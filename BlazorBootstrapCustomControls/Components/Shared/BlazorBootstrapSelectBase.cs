@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.JSInterop;
 using System;
 using System.Collections.Concurrent;
@@ -35,7 +36,7 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   private bool _bssSelectJsRegistered;
 
   /// <summary>Snapshot of <see cref="Data"/> built in <see cref="OnParametersSet"/> (avoids reallocating on every access).</summary>
-  protected IReadOnlyList<SelectItem<TValue>> _items = Array.Empty<SelectItem<TValue>>();
+  protected IReadOnlyList<SelectItem<TItem, TValue>> _items = Array.Empty<SelectItem<TItem, TValue>>();
 
   private TValue GetValue(TItem item)
   {
@@ -148,6 +149,54 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   public IDictionary<string, object>? AdditionalAttributes { get; set; }
 
   /// <summary>
+  /// Optional custom template for each dropdown row.
+  /// </summary>
+  [Parameter] public RenderFragment<SelectItemContext<TItem, TValue>>? ItemTemplate { get; set; }
+
+  /// <summary>
+  /// Optional custom template for selected-value display inside the combobox input.
+  /// </summary>
+  [Parameter] public RenderFragment<SelectItemContext<TItem, TValue>>? SelectedValueTemplate { get; set; }
+
+  /// <summary>
+  /// Optional semantic classifier used by default rendering and template contexts.
+  /// </summary>
+  [Parameter] public Func<TItem, SelectSemantic>? SemanticField { get; set; }
+
+  /// <summary>
+  /// Optional semantic text callback. If omitted, semantic names are used.
+  /// </summary>
+  [Parameter] public Func<TItem, string?>? SemanticTextField { get; set; }
+
+  /// <summary>
+  /// Optional icon content for the convenience rendering path (when <see cref="ItemTemplate"/> is not set).
+  /// Interpreted per <see cref="IconRenderMode"/>.
+  /// </summary>
+  [Parameter] public Func<TItem, string?>? IconContent { get; set; }
+
+  /// <summary>
+  /// Optional accessible name for meaningful icons (emoji/glyph mode or decorative CSS icon with a label).
+  /// When null/empty, icons are treated as decorative (<c>aria-hidden="true"</c>).
+  /// </summary>
+  [Parameter] public Func<TItem, string?>? IconAriaLabelField { get; set; }
+
+  [Parameter] public SelectIconRenderMode IconRenderMode { get; set; } = SelectIconRenderMode.CssClass;
+
+  [Parameter] public SelectIconPlacement IconPlacement { get; set; } = SelectIconPlacement.Start;
+
+  /// <summary>
+  /// When using the convenience icon API, include the icon in the combobox selected-value surface.
+  /// Ignored when <see cref="SelectedValueTemplate"/> is set.
+  /// </summary>
+  [Parameter] public bool ShowIconInSelectedValue { get; set; } = true;
+
+  /// <summary>
+  /// When using the convenience API, include the semantic chip in the combobox selected-value surface when <see cref="SemanticField"/> produces a pill.
+  /// Ignored when <see cref="SelectedValueTemplate"/> is set.
+  /// </summary>
+  [Parameter] public bool ShowSemanticPillInSelectedValue { get; set; } = true;
+
+  /// <summary>
   /// <see cref="InputAttributes"/> without splatted <c>onchange</c>/<c>oninput</c>. Those wire
   /// <see cref="ChangeEventArgs"/> for native inputs; this control uses <c>Value</c>/<c>ValueChanged</c> only.
   /// </summary>
@@ -167,10 +216,107 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   protected override void OnParametersSet()
   {
     _items = (Data ?? Enumerable.Empty<TItem>())
-      .Select(x => new SelectItem<TValue>(TextField?.Invoke(x) ?? x?.ToString() ?? "", GetValue(x)))
+      .Select(x => new SelectItem<TItem, TValue>(x, TextField?.Invoke(x) ?? x?.ToString() ?? "", GetValue(x)))
       .ToList();
     RenderInputAttributes = CopyWithoutDomTextChangeHandlers(InputAttributes);
     RenderAdditionalAttributes = CopyWithoutDomTextChangeHandlers(AdditionalAttributes);
+  }
+
+  protected SelectItemContext<TItem, TValue> ToItemContext(SelectItem<TItem, TValue> item, bool isSelected, bool isHighlighted)
+  {
+    var semantic = GetSemantic(item.Item);
+    return new SelectItemContext<TItem, TValue>(
+      item.Item,
+      item.Value,
+      item.Text,
+      isSelected,
+      isHighlighted,
+      semantic,
+      GetSemanticText(item.Item, semantic));
+  }
+
+  private SelectSemantic GetSemantic(TItem item) => SemanticField?.Invoke(item) ?? SelectSemantic.None;
+
+  private string? GetSemanticText(TItem item, SelectSemantic semantic) =>
+    SemanticTextField?.Invoke(item) ?? DefaultSemanticText(semantic);
+
+  protected static string? DefaultSemanticText(SelectSemantic semantic) =>
+    semantic switch
+    {
+      SelectSemantic.None => null,
+      SelectSemantic.Pending => "Pending",
+      SelectSemantic.Info => "Info",
+      SelectSemantic.Success => "Success",
+      SelectSemantic.Warning => "Warning",
+      SelectSemantic.Danger => "Danger",
+      _ => semantic.ToString()
+    };
+
+  /// <summary>
+  /// Renders icon + label + optional semantic chip for the combobox when <see cref="SelectedValueTemplate"/> is null
+  /// and <see cref="IconContent"/> is provided.
+  /// </summary>
+  protected RenderFragment RenderConvenienceSelectedSegment(SelectItem<TItem, TValue> item)
+  {
+    return builder =>
+    {
+      var ctx = ToItemContext(item, isSelected: true, isHighlighted: false);
+      var iconVal = IconContent?.Invoke(item.Item);
+      var showIcon = ShowIconInSelectedValue && !string.IsNullOrWhiteSpace(iconVal);
+      var showPill = ShowSemanticPillInSelectedValue && !string.IsNullOrWhiteSpace(ctx.SemanticText);
+
+      var seq = 0;
+      builder.OpenElement(seq++, "span");
+      builder.AddAttribute(seq++, "class", "d-inline-flex align-items-center gap-2");
+
+      if (IconPlacement == SelectIconPlacement.Start && showIcon)
+        AppendConvenienceIcon(builder, ref seq, item.Item, iconVal!);
+
+      builder.OpenElement(seq++, "span");
+      builder.AddContent(seq++, item.Text);
+      builder.CloseElement();
+
+      if (showPill)
+      {
+        builder.OpenElement(seq++, "span");
+        builder.AddAttribute(seq++, "class", SelectSemanticCss.GetChipClasses(ctx.Semantic));
+        builder.AddContent(seq++, ctx.SemanticText!);
+        builder.CloseElement();
+      }
+
+      if (IconPlacement == SelectIconPlacement.End && showIcon)
+        AppendConvenienceIcon(builder, ref seq, item.Item, iconVal!);
+
+      builder.CloseElement();
+    };
+  }
+
+  private void AppendConvenienceIcon(RenderTreeBuilder builder, ref int seq, TItem dataItem, string iconVal)
+  {
+    var aria = IconAriaLabelField?.Invoke(dataItem);
+    if (IconRenderMode == SelectIconRenderMode.CssClass)
+    {
+      builder.OpenElement(seq++, "i");
+      builder.AddAttribute(seq++, "class", iconVal);
+      if (!string.IsNullOrEmpty(aria))
+        builder.AddAttribute(seq++, "aria-label", aria);
+      else
+        builder.AddAttribute(seq++, "aria-hidden", "true");
+      builder.CloseElement();
+    }
+    else
+    {
+      builder.OpenElement(seq++, "span");
+      if (!string.IsNullOrEmpty(aria))
+      {
+        builder.AddAttribute(seq++, "role", "img");
+        builder.AddAttribute(seq++, "aria-label", aria);
+      }
+      else
+        builder.AddAttribute(seq++, "aria-hidden", "true");
+      builder.AddContent(seq++, iconVal);
+      builder.CloseElement();
+    }
   }
 
   /// <summary>

@@ -1,3 +1,3 @@
 namespace BlazorBootstrapCustomControls.Components.Shared;
 
-public readonly record struct SelectItem<TValue>(string Text, TValue Value);
+public readonly record struct SelectItem<TItem, TValue>(TItem Item, string Text, TValue Value);

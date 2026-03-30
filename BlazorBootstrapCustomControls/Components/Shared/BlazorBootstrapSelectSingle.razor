@@ -4,7 +4,7 @@
 @typeparam TValue
 @inherits BlazorBootstrapSelectBase<TItem, TValue>
 
-<BlazorBootstrapSelectMarkup TValue="TValue" Id="@_id"
+<BlazorBootstrapSelectMarkup TItem="TItem" TValue="TValue" Id="@_id"
                        Label="@Label"
                        Width="@Width"
                        AutoExpandVertically="@AutoExpandVertically"
@@ -14,7 +14,8 @@
                        DropdownMatchInputWidth="@DropdownMatchInputWidth"
                        Disabled="@Disabled"
                        Open="@_open"
-                       DisplayText="@DisplayText"
+                       DisplayAriaLabel="@DisplayText"
+                       DisplayContent="@DisplayContent"
                        IsPlaceholder="@IsPlaceholder"
                        ShowClearButton="@ShowClearButton"
                        ShouldShowClearButton="@ShouldShowClearButton"
@@ -22,6 +23,12 @@
                        Items="@_items"
                        HighlightedIndex="@_highlightedIndex"
                        IsItemSelected="@IsItemSelected"
+                       CreateItemContext="@ToItemContext"
+                       ItemTemplate="@ItemTemplate"
+                       IconContent="@IconContent"
+                       IconAriaLabelField="@IconAriaLabelField"
+                       IconRenderMode="@IconRenderMode"
+                       IconPlacement="@IconPlacement"
                        AdditionalAttributes="@RenderAdditionalAttributes"
                        OnInputClick="@OnInputClick"
                        OnInputBlur="@OnInputBlur"
@@ -66,12 +73,50 @@
        ?? Value?.ToString()
        ?? "");
 
+  private RenderFragment DisplayContent => builder =>
+  {
+    if (!IsPlaceholder
+        && SelectedValueTemplate is not null
+        && Value is not null
+        && TryGetSelectedItem(out var selected))
+    {
+      builder.AddContent(0, SelectedValueTemplate(ToItemContext(selected, isSelected: true, isHighlighted: false)));
+      return;
+    }
+
+    if (!IsPlaceholder
+        && SelectedValueTemplate is null
+        && IconContent is not null
+        && TryGetSelectedItem(out var convSelected))
+    {
+      builder.AddContent(1, RenderConvenienceSelectedSegment(convSelected));
+      return;
+    }
+
+    builder.AddContent(2, DisplayText);
+  };
+
   protected override bool IsPlaceholder => Value is null;
 
   protected override bool ShouldShowClearButton => AllowDeselect && Value is not null;
 
   protected override bool IsItemSelected(TValue value) =>
     Value is not null && EqualityComparer<TValue>.Default.Equals(value, Value);
+
+  private bool TryGetSelectedItem(out SelectItem<TItem, TValue> selectedItem)
+  {
+    foreach (var item in _items)
+    {
+      if (Value is not null && EqualityComparer<TValue>.Default.Equals(item.Value, Value))
+      {
+        selectedItem = item;
+        return true;
+      }
+    }
+
+    selectedItem = default;
+    return false;
+  }
 
   protected override async Task OnClearValue()
   {
