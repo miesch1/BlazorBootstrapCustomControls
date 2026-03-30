@@ -28,6 +28,12 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   private DateTime _lastTypeAheadInputUtc = DateTime.MinValue;
   private const int TypeAheadResetMilliseconds = 700;
 
+  /// <summary>
+  /// True after <c>BSSelect.init</c> / <c>registerInputKeys</c> ran in an interactive render.
+  /// Used to skip JS teardown in <see cref="DisposeAsync"/> when prerender/SSR disposes the tree before interop is allowed (issue #7).
+  /// </summary>
+  private bool _bssSelectJsRegistered;
+
   /// <summary>Snapshot of <see cref="Data"/> built in <see cref="OnParametersSet"/> (avoids reallocating on every access).</summary>
   protected IReadOnlyList<SelectItem<TValue>> _items = Array.Empty<SelectItem<TValue>>();
 
@@ -209,12 +215,16 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
 
   protected override async Task OnAfterRenderAsync(bool firstRender)
   {
-    if (firstRender)
+    // Prerender / static SSR: not interactive — skip JS (same InvalidOperationException as dispose if invoked).
+    // After prerender, the component renders again with an interactive RendererInfo; init then (even if firstRender is false).
+    if (!_bssSelectJsRegistered && RendererInfo.IsInteractive)
     {
       await JS.InvokeVoidAsync("BSSelect.init", _id, _dotNetRef);
       await JS.InvokeVoidAsync("BSSelect.registerInputKeys", _id, _dotNetRef);
+      _bssSelectJsRegistered = true;
     }
-    if (_open && _justOpened)
+
+    if (_bssSelectJsRegistered && _open && _justOpened)
     {
       _justOpened = false;
       // Keep focus on input (per §7.4) - don't move focus to list items
@@ -230,6 +240,7 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   /// <summary>
   /// Blazor awaits this when the component is removed, so JS teardown and <see cref="DotNetObjectReference{TValue}"/>
   /// disposal complete before the instance is released (no fire-and-forget from sync <c>IDisposable</c>).
+  /// Skips JS teardown when interop never ran (e.g. prerender-only disposal — issue #7).
   /// </summary>
   public async ValueTask DisposeAsync()
   {
@@ -238,7 +249,8 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
 
     try
     {
-      await JS.InvokeVoidAsync("BSSelect.teardown", _id);
+      if (_bssSelectJsRegistered)
+        await JS.InvokeVoidAsync("BSSelect.teardown", _id);
     }
     catch (JSDisconnectedException)
     {
