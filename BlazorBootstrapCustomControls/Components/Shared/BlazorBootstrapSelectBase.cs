@@ -34,6 +34,8 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   /// Used to skip JS teardown in <see cref="DisposeAsync"/> when prerender/SSR disposes the tree before interop is allowed (issue #7).
   /// </summary>
   private bool _bssSelectJsRegistered;
+  private byte _bssSelectRegisterAttempts;
+  private const byte MaxBssSelectRegisterAttempts = 32;
 
   /// <summary>Snapshot of <see cref="Data"/> built in <see cref="OnParametersSet"/> (avoids reallocating on every access).</summary>
   protected IReadOnlyList<SelectItem<TItem, TValue>> _items = Array.Empty<SelectItem<TItem, TValue>>();
@@ -363,11 +365,15 @@ public abstract class BlazorBootstrapSelectBase<TItem, TValue> : ComponentBase, 
   {
     // Prerender / static SSR: not interactive — skip JS (same InvalidOperationException as dispose if invoked).
     // After prerender, the component renders again with an interactive RendererInfo; init then (even if firstRender is false).
-    if (!_bssSelectJsRegistered && RendererInfo.IsInteractive)
+    if (!_bssSelectJsRegistered && RendererInfo.IsInteractive
+        && _bssSelectRegisterAttempts < MaxBssSelectRegisterAttempts)
     {
       await JS.InvokeVoidAsync("BSSelect.init", _id, _dotNetRef);
-      await JS.InvokeVoidAsync("BSSelect.registerInputKeys", _id, _dotNetRef);
-      _bssSelectJsRegistered = true;
+      var keysRegistered = await JS.InvokeAsync<bool>("BSSelect.registerInputKeys", _id, _dotNetRef);
+      if (keysRegistered)
+        _bssSelectJsRegistered = true;
+      else
+        _bssSelectRegisterAttempts++;
     }
 
     if (_bssSelectJsRegistered && _open && _justOpened)

@@ -292,7 +292,7 @@
 /* Optional semantic chip used by default rendering when SemanticField is provided. */
 .status-chip {
   display: inline-block;
-  margin-left: 0.5rem;
+  /* Spacing from label/icon: parent uses flex gap (e.g. .gap-2); avoid extra margin or text–chip looks wider than icon–text */
   padding: 0.1rem 0.5rem;
   border-radius: 9999px;
   font-size: 0.75em;
