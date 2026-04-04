@@ -74,7 +74,17 @@
     registerInputKeys: function (componentId, dotNetRef) {
       var r = root(componentId);
       var inp = r?.querySelector('.bs-select-input');
-      if (!inp) return;
+      if (!inp) return false;
+
+      // Idempotent: if this component was already wired (e.g. re-run on same DOM node),
+      // remove the previous listeners before attaching. Otherwise keydown runs twice per
+      // physical key — extra arrow steps, broken type-ahead buffer, double Enter toggles.
+      var prev = handlers[componentId];
+      if (prev && prev.inputKey) {
+        inp.removeEventListener('keydown', prev.inputKey);
+        if (prev.compStart) inp.removeEventListener('compositionstart', prev.compStart);
+        if (prev.compEnd) inp.removeEventListener('compositionend', prev.compEnd);
+      }
 
       var composing = false;
       function onCompStart() { composing = true; }
@@ -101,6 +111,13 @@
         } else {
           var ariaExpanded = inp.getAttribute('aria-expanded');
           isOpen = ariaExpanded && ariaExpanded.toLowerCase() === 'true';
+        }
+
+        // Key-repeat on Enter would invoke HandleListKey twice (multi-select: select then undo).
+        if (isOpen && k === 'Enter' && e.repeat) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
         }
 
         if (!isOpen && k === 'Delete' && r.querySelector('.bs-select-clear')) {
@@ -144,6 +161,7 @@
       handlers[componentId].inputKey = h;
       handlers[componentId].compStart = onCompStart;
       handlers[componentId].compEnd = onCompEnd;
+      return true;
     }
   };
 })();
